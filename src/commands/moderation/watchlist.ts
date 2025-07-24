@@ -1,5 +1,6 @@
 import {
   ActionRowBuilder,
+  EmbedBuilder,
   ModalBuilder,
   SlashCommandBuilder,
   SlashCommandSubcommandBuilder,
@@ -62,16 +63,39 @@ export const command: Command = {
         .setStyle(TextInputStyle.Short)
         .setRequired(true);
 
-        const reasonRow = new ActionRowBuilder<TextInputBuilder>().addComponents(
-          reason
-        );
-        const usernameRow = new ActionRowBuilder<TextInputBuilder>().addComponents(
-          username
-        );
+      const reasonRow = new ActionRowBuilder<TextInputBuilder>().addComponents(
+        reason
+      );
+      const usernameRow =
+        new ActionRowBuilder<TextInputBuilder>().addComponents(username);
 
       modal.addComponents(reasonRow, usernameRow);
 
       await interaction.showModal(modal);
+    } else if (subcommand === "list") {
+      const watchlist = await prisma.watchList.findMany();
+
+      const embed = new EmbedBuilder()
+        .setTitle("Watchlisten")
+        .setDescription(
+          watchlist.length
+            ? watchlist
+                .map(
+                  (user) =>
+                    `👤 Bruger: ${user.userId}\n🛡️ Staff: ${
+                      user.staffId
+                    }\n🕒 Starttidspunkt: ${new Date(
+                      user.startTime
+                    ).toLocaleString("da-DK", {
+                      hour12: false,
+                    })}\n📄 Grundlag: ${user.reason}\n`
+                )
+                .join("\n----------------------\n")
+            : "Ingen brugere på watchlisten."
+        )
+        .setTimestamp();
+
+      await interaction.reply({ embeds: [embed] });
     }
   },
 };

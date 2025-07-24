@@ -22,7 +22,7 @@
   },
   "homepage": "https://github.com/tn-bots/euphoria-whitelist#readme",
   "dependencies": {
-    "@prisma/client": "^6.6.0",
+    "@prisma/client": "^6.5.0",
     "axios": "^1.8.4",
     "chalk": "^5.4.1",
     "discord.js": "^14.18.0",

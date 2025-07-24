@@ -9,7 +9,7 @@ export const modal: Modal = {
     const user = interaction.fields.getTextInputValue("username");
     const grundlag = interaction.fields.getTextInputValue("reason");
 
-    const session = prisma.watchList.create({
+    const session = await prisma.watchList.create({
       data: {
         userId: user,
         staffId: interaction.user.id,
@@ -41,5 +41,6 @@ export const modal: Modal = {
     }
 
     await channel.send({ embeds: [embed]})
+    await interaction.reply({content: 'Brugeren er blevet sat på watchlisten!', ephemeral: true})
   },
 };
