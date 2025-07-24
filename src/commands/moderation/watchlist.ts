@@ -9,8 +9,6 @@ import {
 } from "discord.js";
 import { Command } from "../../interfaces/Command";
 import prisma from "../../utils/database";
-import axios from "axios";
-import config from "../../config.json";
 
 export const command: Command = {
   data: new SlashCommandBuilder()
@@ -31,6 +29,17 @@ export const command: Command = {
       new SlashCommandSubcommandBuilder()
         .setName("list")
         .setDescription("Få en liste med alle der er på vores watchlist")
+    )
+    .addSubcommand(
+      new SlashCommandSubcommandBuilder()
+        .setName("fjern")
+        .setDescription("Fjern en bruger fra watchlisten")
+        .addUserOption((option) =>
+          option
+            .setName("person")
+            .setDescription("Personen der skal fjernes fra watchlisten")
+            .setRequired(true)
+        )
     ),
   execute: async (interaction) => {
     const subcommand = interaction.options.getSubcommand();
@@ -58,8 +67,8 @@ export const command: Command = {
 
       const username = new TextInputBuilder()
         .setCustomId("username")
-        .setLabel("Hvad er denne brugers username?")
-        .setPlaceholder(`${user.username}`)
+        .setLabel("Hvad er denne brugers discord ID?")
+        //.setPlaceholder('Hvis du ikke ved hvordan man finder en bruges id, kan denne guide hjælpe dig: https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID-')
         .setStyle(TextInputStyle.Short)
         .setRequired(true);
 
@@ -94,6 +103,41 @@ export const command: Command = {
             : "Ingen brugere på watchlisten."
         )
         .setTimestamp();
+
+      await interaction.reply({ embeds: [embed] });
+    } else if (subcommand === "fjern") {
+      const user = interaction.options.getUser("person");
+
+      if (!user) {
+        await interaction.reply({
+          content: "Du skal huske at angive en bruger",
+          ephemeral: true,
+        });
+        return;
+      }
+
+      const watchlist = await prisma.watchList.findMany();
+
+      const userToRemove = watchlist.find((entry) => entry.userId === user.id);
+
+      if (!userToRemove) {
+        await interaction.reply({
+          content: "Denne bruger er ikke på watchlisten",
+          ephemeral: true,
+        });
+        return;
+      }
+
+      const embed = new EmbedBuilder()
+        .setTitle("Bruger fjernet fra watchlisten")
+        .setDescription(`👤 Bruger: ${userToRemove.userId}\n🛡️ Staff: ${userToRemove.staffId}`)
+        .setTimestamp();
+
+      await prisma.watchList.delete({
+        where: {
+          id: userToRemove.id,
+        },
+      });
 
       await interaction.reply({ embeds: [embed] });
     }
