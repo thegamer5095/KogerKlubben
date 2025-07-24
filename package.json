@@ -1,0 +1,36 @@
+{
+  "name": "euphoria-whitelist",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "ts-node src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tn-bots/euphoria-whitelist.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/tn-bots/euphoria-whitelist/issues"
+  },
+  "homepage": "https://github.com/tn-bots/euphoria-whitelist#readme",
+  "dependencies": {
+    "@prisma/client": "^6.6.0",
+    "axios": "^1.8.4",
+    "chalk": "^5.4.1",
+    "discord.js": "^14.18.0",
+    "dotenv": "^16.4.7",
+    "mysql2": "^3.14.0",
+    "node": "^23.11.0",
+    "prisma": "^6.5.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.2"
+  }
+}

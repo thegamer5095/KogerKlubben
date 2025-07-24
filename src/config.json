@@ -1,0 +1,41 @@
+{
+    "bot": {
+        "token": "MTM5MzE3NTYwMDAyMTM3MzAxOQ.G7YC8v.XTdm406HUj4EGnunVf_rI2TivdIp9O3HxA997Q",
+        "clientId": "1393175600021373019",
+        "color": "Blue"
+    },
+    "roles": {
+        "staffId": "839084638503960587",
+        "DeveloperId": "847403673012797470", 
+        "afvwlRole": "847403673012797470"
+    },
+    "channels": {
+        "whiteChannelId": "833402838692003871",
+        "JoinLog": "833402838692003871",
+        "errorLog": "833402838692003871"
+    },
+    "database": {
+        "enabled": false,
+        "DB_HOST": "localhost",
+        "DB_USER": "root",
+        "DB_PASSWORD": "",
+        "DB_NAME": "complex", 
+        "DB_PORT": "3306"
+    },
+    "server": {
+        "Server-ip": "193.181.23.177"
+    },
+    "linkOnly": {
+        "channels": ["833402838692003871"]
+    },
+    "tickets": {
+        "categories": {
+            "ticket": "833390562911584307"
+        }        
+    },
+    "kick": {
+        "kick_token_secret": "e79368b23e3ddb7df821c6b9fa54bda10f5afd827cf1c269b84f65af2e673b22",
+        "kick_token_client": "01JZWH27NZC8WAKW8RVFM2A9PQ",
+        "twitch_token": "4nzi6qfl6csfujrp6a905yvfztqsl7"
+    }
+}

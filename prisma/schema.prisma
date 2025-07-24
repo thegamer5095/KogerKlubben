@@ -1,0 +1,26 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model WhitelistSession {
+  id          Int      @id @default(autoincrement())
+  userId      String   // The user being whitelisted
+  staffId     String   // The staff member conducting the whitelist
+  status      String   @default("PENDING") // PENDING, APPROVED, DENIED
+  startTime   DateTime @default(now())
+  endTime     DateTime?
+  channelId   String
+  messageId   String?
+  notes       String?
+}
