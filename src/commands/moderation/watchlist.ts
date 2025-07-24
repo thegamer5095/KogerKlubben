@@ -32,50 +32,46 @@ export const command: Command = {
         .setDescription("Få en liste med alle der er på vores watchlist")
     ),
   execute: async (interaction) => {
-    const command = interaction.commandName;
+    const subcommand = interaction.options.getSubcommand();
 
-    switch (command) {
-      case "opret": {
-        const user = interaction.options.getUser("person");
+    if (subcommand === "opret") {
+      const user = interaction.options.getUser("person");
 
-        if (!user) {
-          await interaction.reply({
-            content: "Du skal huske at angive en bruger",
-            ephemeral: true,
-          });
-          return;
-        }
-
-        const modal = new ModalBuilder()
-          .setCustomId("add-watchlist")
-          .setTitle(`Tilføjelse af ${user.username} til watchlisten`);
-
-        const reason = new TextInputBuilder()
-          .setCustomId("reason")
-          .setLabel("Hvorfor skal denne bruger på listen?")
-          .setStyle(TextInputStyle.Paragraph)
-          .setRequired(true);
-
-        const username = new TextInputBuilder()
-          .setCustomId("username")
-          .setLabel("Hvad er denne brugers username?")
-          .setPlaceholder(`${user.username}`)
-          .setStyle(TextInputStyle.Short)
-          .setRequired(true);
-
-        const reasonRow =
-          new ActionRowBuilder<TextInputBuilder>().addComponents(reason);
-        const usernameRow =
-          new ActionRowBuilder<TextInputBuilder>().addComponents(username);
-
-        modal.addComponents(reasonRow, usernameRow);
-
-        await interaction.showModal(modal);
-        break;
+      if (!user) {
+        await interaction.reply({
+          content: "Du skal huske at angive en bruger",
+          ephemeral: true,
+        });
+        return;
       }
 
-      case "list": {
-      }
+      const modal = new ModalBuilder()
+        .setCustomId("add-watchlist")
+        .setTitle(`Tilføjelse af ${user.username} til watchlisten`);
+
+      const reason = new TextInputBuilder()
+        .setCustomId("reason")
+        .setLabel("Hvorfor skal denne bruger på listen?")
+        .setStyle(TextInputStyle.Paragraph)
+        .setRequired(true);
+
+      const username = new TextInputBuilder()
+        .setCustomId("username")
+        .setLabel("Hvad er denne brugers username?")
+        .setPlaceholder(`${user.username}`)
+        .setStyle(TextInputStyle.Short)
+        .setRequired(true);
+
+        const reasonRow = new ActionRowBuilder<TextInputBuilder>().addComponents(
+          reason
+        );
+        const usernameRow = new ActionRowBuilder<TextInputBuilder>().addComponents(
+          username
+        );
+
+      modal.addComponents(reasonRow, usernameRow);
+
+      await interaction.showModal(modal);
     }
   },
 };
