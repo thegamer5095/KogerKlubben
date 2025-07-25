@@ -2,6 +2,7 @@ import {
   ActionRowBuilder,
   EmbedBuilder,
   ModalBuilder,
+  PermissionFlagsBits,
   SlashCommandBuilder,
   SlashCommandSubcommandBuilder,
   TextInputBuilder,
@@ -9,11 +10,13 @@ import {
 } from "discord.js";
 import { Command } from "../../interfaces/Command";
 import prisma from "../../utils/database";
+import { embedPages } from "../../handlers/pages"; // Adjust path if needed
 
 export const command: Command = {
   data: new SlashCommandBuilder()
     .setName("watchlist")
     .setDescription("Interager med kogerklubbens watch liste")
+    .setDefaultMemberPermissions(PermissionFlagsBits.KickMembers)
     .addSubcommand(
       new SlashCommandSubcommandBuilder()
         .setName("opret")
@@ -84,27 +87,42 @@ export const command: Command = {
     } else if (subcommand === "list") {
       const watchlist = await prisma.watchList.findMany();
 
-      const embed = new EmbedBuilder()
-        .setTitle("Watchlisten")
-        .setDescription(
-          watchlist.length
-            ? watchlist
-                .map(
-                  (user) =>
-                    `👤 Bruger: ${user.userId}\n🛡️ Staff: ${
-                      user.staffId
-                    }\n🕒 Starttidspunkt: ${new Date(
-                      user.startTime
-                    ).toLocaleString("da-DK", {
-                      hour12: false,
-                    })}\n📄 Grundlag: ${user.reason}\n`
-                )
-                .join("\n----------------------\n")
-            : "Ingen brugere på watchlisten."
-        )
-        .setTimestamp();
+      // Helper to chunk array into groups of 5
+      function chunkArray<T>(arr: T[], size: number): T[][] {
+        const result: T[][] = [];
+        for (let i = 0; i < arr.length; i += size) {
+          result.push(arr.slice(i, i + size));
+        }
+        return result;
+      }
 
-      await interaction.reply({ embeds: [embed] });
+      const chunks = chunkArray(watchlist, 5);
+
+      const embeds = chunks.map((chunk, idx) => {
+        return new EmbedBuilder()
+          .setTitle("Watchlisten")
+          .setDescription(
+            chunk
+              .map(
+                (user) =>
+                  `👤 Bruger: ${user.userId}\n🛡️ Staff: ${
+                    user.staffId
+                  }\n🕒 Starttidspunkt: ${new Date(
+                    user.startTime
+                  ).toLocaleString("da-DK", { hour12: false })}\n📄 Grundlag: ${
+                    user.reason
+                  }\n`
+              )
+              .join("\n----------------------\n")
+          )
+          .setTimestamp();
+      });
+
+      if (embeds.length > 1) {
+        await embedPages(interaction.client, interaction, embeds);
+      } else {
+        await interaction.reply({ embeds: embeds });
+      }
     } else if (subcommand === "fjern") {
       const user = interaction.options.getUser("person");
 
@@ -130,7 +148,9 @@ export const command: Command = {
 
       const embed = new EmbedBuilder()
         .setTitle("Bruger fjernet fra watchlisten")
-        .setDescription(`👤 Bruger: ${userToRemove.userId}\n🛡️ Staff: ${userToRemove.staffId}`)
+        .setDescription(
+          `👤 Bruger: ${userToRemove.userId}\n🛡️ Staff: ${userToRemove.staffId}`
+        )
         .setTimestamp();
 
       await prisma.watchList.delete({
