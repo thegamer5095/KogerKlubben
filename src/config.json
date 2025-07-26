@@ -7,10 +7,12 @@
     "roles": {
         "staffId": "839084638503960587",
         "DeveloperId": "847403673012797470", 
-        "afvwlRole": "847403673012797470"
+        "afvwlRole": "847403673012797470",
+        "moderatorRole": "839084638503960587"
     },
     "channels": {
-        "watchchannel": "833402838692003871"
+        "watchchannel": "833402838692003871",
+        "logs": "833402838692003871"
     },
     "database": {
         "enabled": false,
