@@ -87,6 +87,20 @@ export const command: Command = {
     } else if (subcommand === "list") {
       const watchlist = await prisma.watchList.findMany();
 
+      // Count the number of entries per userId
+      const warningCounts: Record<string, number> = {};
+      for (const entry of watchlist) {
+        warningCounts[entry.userId] = (warningCounts[entry.userId] || 0) + 1;
+      }
+
+      // Only show unique users (one entry per user in the list)
+      const uniqueUsers = Object.values(
+        watchlist.reduce((acc, entry) => {
+          if (!acc[entry.userId]) acc[entry.userId] = entry;
+          return acc;
+        }, {} as Record<string, (typeof watchlist)[0]>)
+      );
+
       // Helper to chunk array into groups of 5
       function chunkArray<T>(arr: T[], size: number): T[][] {
         const result: T[][] = [];
@@ -96,9 +110,9 @@ export const command: Command = {
         return result;
       }
 
-      const chunks = chunkArray(watchlist, 5);
+      const chunks = chunkArray(uniqueUsers, 5);
 
-      const embeds = chunks.map((chunk, idx) => {
+      const embeds = chunks.map((chunk) => {
         return new EmbedBuilder()
           .setTitle("Watchlisten")
           .setDescription(
@@ -107,11 +121,11 @@ export const command: Command = {
                 (user) =>
                   `👤 Bruger: ${user.userId}\n🛡️ Staff: ${
                     user.staffId
-                  }\n🕒 Starttidspunkt: ${new Date(
+                  }\n🕒 Bruger tilføjet den: ${new Date(
                     user.startTime
                   ).toLocaleString("da-DK", { hour12: false })}\n📄 Grundlag: ${
                     user.reason
-                  }\n`
+                  }\n🔔 Antal advarsler: ${warningCounts[user.userId] || 0}`
               )
               .join("\n----------------------\n")
           )
