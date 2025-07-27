@@ -30,7 +30,7 @@ export const command: Command = {
           option
             .setName("person")
             .setDescription("Personen der skal tilføjes watchlisten")
-            .setRequired(true)
+            .setRequired(false)
         )
     )
     .addSubcommand(
@@ -102,7 +102,7 @@ export const command: Command = {
 
         const embed = new EmbedBuilder()
           .setTitle(`${user.username} watchlisten`) 
-          .setDescription(watchlist.map((user) => `👤 Bruger: <@${user.userId}>\n🛡️ Staff: <@${user.staffId}>\n🕒 Bruger tilføjet den: ${new Date(user.startTime).toLocaleString("da-DK", { hour12: false })}\n📄 Grundlag: ${user.reason}\n🔔 Antal advarsler: ${warningCounts[user.userId] || 0}`).join("\n"))
+          .setDescription(watchlist.map((user: any) => `👤 Bruger: <@${user.userId}>\n🛡️ Staff: <@${user.staffId}>\n🕒 Bruger tilføjet den: ${new Date(user.startTime).toLocaleString("da-DK", { hour12: false })}\n📄 Grundlag: ${user.reason}\n🔔 Antal advarsler: ${warningCounts[user.userId] || 0}`).join("\n"))
           .setTimestamp();
 
         await interaction.reply({ embeds: [embed] });
@@ -117,7 +117,7 @@ export const command: Command = {
 
       // Only show unique users (one entry per user in the list)
       const uniqueUsers = Object.values(
-        watchlist.reduce((acc, entry) => {
+        watchlist.reduce((acc: Record<string, (typeof watchlist)[0]>, entry: (typeof watchlist)[0]) => {
           if (!acc[entry.userId]) acc[entry.userId] = entry;
           return acc;
         }, {} as Record<string, (typeof watchlist)[0]>)
@@ -140,7 +140,7 @@ export const command: Command = {
           .setDescription(
             chunk
               .map(
-                (user) =>
+                (user: any) =>
                   `👤 Bruger: ${user.userId}\n🛡️ Staff: ${
                     user.staffId
                   }\n🕒 Bruger tilføjet den: ${new Date(
@@ -172,7 +172,7 @@ export const command: Command = {
 
       const watchlist = await prisma.watchList.findMany();
 
-      const userToRemove = watchlist.find((entry) => entry.userId === user.id);
+      const userToRemove = watchlist.find((entry: any) => entry.userId === user.id);
 
       if (!userToRemove) {
         await interaction.reply({
