@@ -24,12 +24,12 @@ export const event = {
         console.error(error);
         if (interaction.replied || interaction.deferred) {
           await interaction.followUp({
-            content: "There was an error while executing this command!",
+            content: "Der opstod en fejl under udførelse af kommandoen! Kontakt .the_gamer hvis dette fortsætter.",
             ephemeral: true,
           });
         } else {
           await interaction.reply({
-            content: "There was an error while executing this command!",
+            content: "Der opstod en fejl under udførelse af kommandoen! Kontakt .the_gamer hvis dette fortsætter.",
             ephemeral: true,
           });
         }
