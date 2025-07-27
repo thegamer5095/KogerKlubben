@@ -8,6 +8,6 @@ export const event = {
     once: true,
     execute(client: Client) {
         console.log(`Ready! Logged in as ${client.user?.tag}`);
-
+        client.user?.setActivity("Mobber Uni", { type: ActivityType.Listening });
     }
 }; 
