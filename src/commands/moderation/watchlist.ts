@@ -21,17 +21,17 @@ export const command: Command = {
       new SlashCommandSubcommandBuilder()
         .setName("opret")
         .setDescription("Indsæt en ny person på watchlisten")
+    )
+    .addSubcommand(
+      new SlashCommandSubcommandBuilder()
+        .setName("list")
+        .setDescription("Få en liste med alle der er på vores watchlist")
         .addUserOption((option) =>
           option
             .setName("person")
             .setDescription("Personen der skal tilføjes watchlisten")
             .setRequired(true)
         )
-    )
-    .addSubcommand(
-      new SlashCommandSubcommandBuilder()
-        .setName("list")
-        .setDescription("Få en liste med alle der er på vores watchlist")
     )
     .addSubcommand(
       new SlashCommandSubcommandBuilder()
@@ -85,8 +85,30 @@ export const command: Command = {
 
       await interaction.showModal(modal);
     } else if (subcommand === "list") {
-      const watchlist = await prisma.watchList.findMany();
 
+      const user = interaction.options.getUser("person");
+
+      if (user) {
+        const watchlist = await prisma.watchList.findMany({
+          where: {
+            userId: user.id,
+          },
+        });
+
+        const warningCounts: Record<string, number> = {};
+        for (const entry of watchlist) {
+          warningCounts[entry.userId] = (warningCounts[entry.userId] || 0) + 1;
+        }
+
+        const embed = new EmbedBuilder()
+          .setTitle(`${user.username} watchlisten`) 
+          .setDescription(watchlist.map((user) => `👤 Bruger: <@${user.userId}>\n🛡️ Staff: <@${user.staffId}>\n🕒 Bruger tilføjet den: ${new Date(user.startTime).toLocaleString("da-DK", { hour12: false })}\n📄 Grundlag: ${user.reason}\n🔔 Antal advarsler: ${warningCounts[user.userId] || 0}`).join("\n"))
+          .setTimestamp();
+
+        await interaction.reply({ embeds: [embed] });
+        return;
+      }
+      const watchlist = await prisma.watchList.findMany();
       // Count the number of entries per userId
       const warningCounts: Record<string, number> = {};
       for (const entry of watchlist) {
