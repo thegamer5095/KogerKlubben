@@ -140,7 +140,7 @@ export const command: Command = {
             chunk
               .map(
                 (user: any) =>
-                  `👤 Bruger: ${user.userId}\n🛡️ Staff: ${
+                  `👤 Bruger: <@${user.userId}>\n🛡️ Staff: <@${
                     user.staffId
                   }\n🕒 Bruger tilføjet den: ${new Date(
                     user.startTime
