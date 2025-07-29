@@ -48,19 +48,10 @@ export const command: Command = {
     const subcommand = interaction.options.getSubcommand();
 
     if (subcommand === "opret") {
-      const user = interaction.options.getUser("person");
-
-      if (!user) {
-        await interaction.reply({
-          content: "Du skal huske at angive en bruger",
-          ephemeral: true,
-        });
-        return;
-      }
 
       const modal = new ModalBuilder()
         .setCustomId("add-watchlist")
-        .setTitle(`Tilføjelse af ${user.username} til watchlisten`);
+        .setTitle(`Tilføjelse af en bruger til watchlisten`);
 
       const reason = new TextInputBuilder()
         .setCustomId("reason")
@@ -95,6 +86,14 @@ export const command: Command = {
           },
         });
 
+        if (watchlist.length === 0) {
+          await interaction.reply({
+            content: "Denne bruger er ikke på watchlisten",
+            ephemeral: true,
+          });
+          return;
+        }
+
         const warningCounts: Record<string, number> = {};
         for (const entry of watchlist) {
           warningCounts[entry.userId] = (warningCounts[entry.userId] || 0) + 1;
@@ -105,7 +104,7 @@ export const command: Command = {
           .setDescription(watchlist.map((user: any) => `👤 Bruger: <@${user.userId}>\n🛡️ Staff: <@${user.staffId}>\n🕒 Bruger tilføjet den: ${new Date(user.startTime).toLocaleString("da-DK", { hour12: false })}\n📄 Grundlag: ${user.reason}\n🔔 Antal advarsler: ${warningCounts[user.userId] || 0}`).join("\n"))
           .setTimestamp();
 
-        await interaction.reply({ embeds: [embed] });
+        await interaction.reply({ embeds: [embed], ephemeral: true });
         return;
       }
       const watchlist = await prisma.watchList.findMany();
