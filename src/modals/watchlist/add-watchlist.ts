@@ -29,7 +29,7 @@ export const modal: Modal = {
 
     const embed = new EmbedBuilder()
     .setTitle('En ny bruger er blevet oprette på watchlisten!')
-    .setDescription(`👤 Bruger: ${user}\n🛡️ Staff: ${interaction.user}\n🕒 Starttidspunkt: ${new Date().toLocaleTimeString('da-DK', { hour12: false })}\nGrundlag: ${grundlag}`)
+    .setDescription(`👤 Bruger: <@${user}>\n🛡️ Staff: <@${interaction.user.id}>\n🕒 Starttidspunkt: ${new Date().toLocaleTimeString('da-DK', { hour12: false })}\nGrundlag: ${grundlag}`)
     .setThumbnail(interaction.user.displayAvatarURL())
     .setTimestamp();
 
