@@ -184,7 +184,7 @@ export const command: Command = {
       const embed = new EmbedBuilder()
         .setTitle("Bruger fjernet fra watchlisten")
         .setDescription(
-          `👤 Bruger: ${userToRemove.userId}\n🛡️ Staff: ${userToRemove.staffId}`
+          `👤 Bruger: <@${userToRemove.userId}>\n🛡️ Staff: <@${userToRemove.staffId}>`
         )
         .setTimestamp();
 
