@@ -9,10 +9,10 @@ export const event = {
 
     if (message.member?.roles.cache.has(config.roles.moderatorRole)) return;
 
-    if (message.content.includes("discord.gg")) {
+    if (message.content.includes("discord.gg") || message.content.includes("onlyfans.co.uk")) {
       const embed = new EmbedBuilder()
         .setDescription(
-          `${message.author} har forsøgt at sende nsfw invites, alle beskeder er blevet slettet!`
+          `${message.author} har forsøgt at sende nsfw invites, alle beskeder er blevet slettet!\nBesked: \`\`\`${message.content}\`\`\``
         )
         .setTimestamp()
         .setFooter({

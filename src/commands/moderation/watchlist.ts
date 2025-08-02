@@ -66,13 +66,20 @@ export const command: Command = {
         .setStyle(TextInputStyle.Short)
         .setRequired(true);
 
+        const action = new TextInputBuilder()
+        .setCustomId("action")
+        .setLabel("Hvilken handling er blevet taget?")
+        .setStyle(TextInputStyle.Short)
+        .setRequired(true);
+
       const reasonRow = new ActionRowBuilder<TextInputBuilder>().addComponents(
         reason
       );
       const usernameRow =
         new ActionRowBuilder<TextInputBuilder>().addComponents(username);
+      const actionRow = new ActionRowBuilder<TextInputBuilder>().addComponents(action);
 
-      modal.addComponents(reasonRow, usernameRow);
+      modal.addComponents(reasonRow, usernameRow, actionRow);
 
       await interaction.showModal(modal);
     } else if (subcommand === "list") {
@@ -101,7 +108,7 @@ export const command: Command = {
 
         const embed = new EmbedBuilder()
           .setTitle(`${user.username} watchlisten`) 
-          .setDescription(watchlist.map((user: any) => `👤 Bruger: <@${user.userId}>\n🛡️ Staff: <@${user.staffId}>\n🕒 Bruger tilføjet den: ${new Date(user.startTime).toLocaleString("da-DK", { hour12: false })}\n📄 Grundlag: ${user.reason}\n🔔 Antal advarsler: ${warningCounts[user.userId] || 0}`).join("\n"))
+          .setDescription(watchlist.map((user: any) => `👤 Bruger: <@${user.userId}>\n🛡️ Staff: <@${user.staffId}>\n🕒 Bruger tilføjet den: ${new Date(user.startTime).toLocaleString("da-DK", { hour12: false })}\n📄 Grundlag: ${user.reason}\nHvilken handling er blevet taget?: ${user.action}\n🔔 Antal advarsler: ${warningCounts[user.userId] || 0}`).join("\n"))
           .setTimestamp();
 
         await interaction.reply({ embeds: [embed], ephemeral: true });
@@ -146,7 +153,7 @@ export const command: Command = {
                     user.startTime
                   ).toLocaleString("da-DK", { hour12: false })}\n📄 Grundlag: ${
                     user.reason
-                  }\n🔔 Antal advarsler: ${warningCounts[user.userId] || 0}`
+                  }\nHvilken handling er blevet taget?: ${user.action}\n🔔 Antal advarsler: ${warningCounts[user.userId] || 0}`
               )
               .join("\n----------------------\n")
           )

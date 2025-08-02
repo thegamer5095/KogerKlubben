@@ -8,14 +8,15 @@ export const modal: Modal = {
   execute: async (interaction: ModalSubmitInteraction) => {
     const user = interaction.fields.getTextInputValue("username");
     const grundlag = interaction.fields.getTextInputValue("reason");
-
+    const action = interaction.fields.getTextInputValue("action");
     const session = await prisma.watchList.create({
       data: {
         userId: user,
         staffId: interaction.user.id,
         startTime: new Date(),
         reason: grundlag,
-      },
+        action: action,
+      }as any,
     });
 
     if (!session) {
@@ -29,7 +30,7 @@ export const modal: Modal = {
 
     const embed = new EmbedBuilder()
     .setTitle('En ny bruger er blevet oprette på watchlisten!')
-    .setDescription(`👤 Bruger: <@${user}>\n🛡️ Staff: <@${interaction.user.id}>\n🕒 Starttidspunkt: ${new Date().toLocaleTimeString('da-DK', { hour12: false })}\nGrundlag: ${grundlag}`)
+    .setDescription(`👤 Bruger: <@${user}>\n🛡️ Staff: <@${interaction.user.id}>\n🕒 Starttidspunkt: ${new Date().toLocaleTimeString('da-DK', { hour12: false })}\nGrundlag: ${grundlag}\nHvilken handling er blevet taget?: ${action}`)
     .setThumbnail(interaction.user.displayAvatarURL())
     .setTimestamp();
 

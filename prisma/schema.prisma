@@ -19,4 +19,5 @@ model WatchList {
   staffId     String   // The staff member conducting the whitelist
   startTime   DateTime @default(now())
   reason       String?
+  action      String?
 }
