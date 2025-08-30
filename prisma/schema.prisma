@@ -21,3 +21,10 @@ model WatchList {
   reason       String?
   action      String?
 }
+
+model Blacklist {
+  id      Int @id @default(autoincrement())
+  userId  String // Brugeren der bliver blacklisted
+  staffId String
+  reason  String?
+}
