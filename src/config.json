@@ -12,7 +12,8 @@
     },
     "channels": {
         "watchchannel": "1399109464010915901",
-        "logs": "1399109464010915901"
+        "logs": "1399109464010915901",
+        "ticketChannel": "844614175997427793"
     },
     "database": {
         "enabled": false,
