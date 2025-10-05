@@ -1,10 +1,12 @@
 import { Client, Collection, GatewayIntentBits } from "discord.js";
 import { Command } from "./interfaces/Command";
 import { Modal } from "./interfaces/Modal";
+import { SelectMenu } from "./interfaces/SelectMenu";
 import { CommandHandler } from "./handlers/CommandHandler";
 import { EventHandler } from "./handlers/EventHandler";
 import { ModalHandler } from "./handlers/ModalHandler";
 import { ButtonHandler } from "./handlers/Buttonhandler";
+import { SelectMenuHandler } from "./handlers/SelectMenuHandler";
 import config from "./config.json";
 import { db } from "./utils/mysql";
 
@@ -12,10 +14,12 @@ export class Bot extends Client {
   public commands: Collection<string, Command>;
   public modals: Collection<string, Modal>;
   public buttons: Collection<string, any>;
+  public selectMenus: Collection<string, SelectMenu>;
   private commandHandler: CommandHandler;
   private eventHandler: EventHandler;
   private modalHandler: ModalHandler;
   private buttonHandler: ButtonHandler;
+  public selectMenuHandler: SelectMenuHandler;
 
   constructor() {
     super({
@@ -30,45 +34,30 @@ export class Bot extends Client {
     this.commands = new Collection();
     this.modals = new Collection();
     this.buttons = new Collection();
+    this.selectMenus = new Collection();
     this.commandHandler = new CommandHandler(this);
     this.eventHandler = new EventHandler(this);
     this.modalHandler = new ModalHandler(this);
     this.buttonHandler = new ButtonHandler(this);
+    this.selectMenuHandler = new SelectMenuHandler(this);
   }
 
   async initialize() {
     try {
       if (config.database.enabled) {
-        // Test database connection
-        await db.getConnection().then((connection) => {
-          console.log("[Bot] Database connection test successful");
-        connection.release();
-      });
-    }
+        await db.getConnection();
+        console.log("[Bot] Connected to database");
+      }
 
-      // Load commands first
-      console.log("Loading commands...");
-      this.commands = await this.commandHandler.loadCommands();
-      
-      // Register commands with Discord API
-      console.log("Registering commands...");
-      await this.commandHandler.registerCommands();
-      
-      // Load events
-      console.log("Loading events...");
+      await this.commandHandler.loadCommands();
       await this.eventHandler.loadEvents();
-      
-      // Load modals and buttons
-      console.log("Loading modals...");
-      this.modals = await this.modalHandler.loadModals();
-      console.log("Loading buttons...");
-      this.buttons = await this.buttonHandler.loadButtons();
-      
-      // Login to Discord
-      console.log("Logging in...");
+      await this.modalHandler.loadModals();
+      await this.buttonHandler.loadButtons();
+      await this.selectMenuHandler.loadSelectMenus();
+
       await this.login(config.bot.token);
     } catch (error) {
-      console.error("Error during initialization:", error);
+      console.error("[Bot] Failed to initialize:", error);
     }
   }
 }

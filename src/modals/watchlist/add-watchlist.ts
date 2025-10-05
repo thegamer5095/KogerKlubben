@@ -1,4 +1,9 @@
-import { EmbedBuilder, ModalSubmitInteraction } from "discord.js";
+import {
+  EmbedBuilder,
+  ModalSubmitInteraction,
+  StringSelectMenuBuilder,
+  ActionRowBuilder,
+} from "discord.js";
 import { Modal } from "../../interfaces/Modal";
 import prisma from "../../utils/database";
 import config from "../../config.json";
@@ -9,6 +14,7 @@ export const modal: Modal = {
     const user = interaction.fields.getTextInputValue("username");
     const grundlag = interaction.fields.getTextInputValue("reason");
     const action = interaction.fields.getTextInputValue("action");
+
     const session = await prisma.watchList.create({
       data: {
         userId: user,
@@ -16,32 +22,62 @@ export const modal: Modal = {
         startTime: new Date(),
         reason: grundlag,
         action: action,
-      }as any,
+      } as any,
     });
 
     if (!session) {
       await interaction.reply({
         content:
           "Der opstod en fejl under oprettelsen af brugeren. Kontakt .the_gamer, hvis dette problem fortsætter :)",
-        ephemeral: true,
+          flags: ['Ephemeral']
       });
       return;
     }
 
-    const embed = new EmbedBuilder()
-    .setTitle('En ny bruger er blevet oprette på watchlisten!')
-    .setDescription(`👤 Bruger: <@${user}>\n🛡️ Staff: <@${interaction.user.id}>\n🕒 Starttidspunkt: ${new Date().toLocaleTimeString('da-DK', { hour12: false })}\nGrundlag: ${grundlag}\nHvilken handling er blevet taget?: ${action}`)
-    .setThumbnail(interaction.user.displayAvatarURL())
-    .setTimestamp();
+    const selectMenu = new StringSelectMenuBuilder()
+      .setCustomId(`punishment-select-${user}`)
+      .setPlaceholder("Vælg straf for denne bruger")
+      .addOptions([
+        {
+          label: "Advarsel",
+          value: "warning",
+          description: "Giv brugeren en advarsel",
+        },
+        {
+          label: "Timeout (1 time)",
+          value: "timeout_5min",
+          description: "Timeout brugeren i 5 minutter",
+        },
+        {
+          label: "Timeout (24 timer)",
+          value: "timeout_10min",
+          description: "Timeout brugeren i 10 minutter",
+        },
+        {
+          label: "Timeout (7 dage)",
+          value: "timeout_1hour",
+          description: "Timeout brugeren i 1 time",
+        },
+        {
+          label: "Kick",
+          value: "kick",
+          description: "Kick brugeren fra serveren",
+        },
+        {
+          label: "Ingen straf",
+          value: "none",
+          description: "Ingen straf - kun tilføj til watchlist",
+        },
+      ]);
 
-    const channel = interaction.guild?.channels.cache.get(config.channels.watchchannel)
+    const row = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+      selectMenu
+    );
 
-    if (!channel?.isTextBased()) {
-        await interaction.reply({content: 'Den angivet kanal (i configgen) skal være en text kanal!'})
-        return;
-    }
-
-    await channel.send({ embeds: [embed]})
-    await interaction.reply({content: 'Brugeren er blevet sat på watchlisten!', ephemeral: true})
+    await interaction.reply({
+      content: `Brugeren <@${user}> er blevet tilføjet til watchlisten.\n**Grundlag:** ${grundlag}\n**Handling:** ${action}\n\nVælg nu hvilken straf der skal gives:`,
+      components: [row],
+      flags: ['Ephemeral']
+    });
   },
 };

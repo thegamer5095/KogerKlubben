@@ -66,20 +66,13 @@ export const command: Command = {
         .setStyle(TextInputStyle.Short)
         .setRequired(true);
 
-        const action = new TextInputBuilder()
-        .setCustomId("action")
-        .setLabel("Hvilken handling er blevet taget?")
-        .setStyle(TextInputStyle.Short)
-        .setRequired(true);
-
       const reasonRow = new ActionRowBuilder<TextInputBuilder>().addComponents(
         reason
       );
       const usernameRow =
         new ActionRowBuilder<TextInputBuilder>().addComponents(username);
-      const actionRow = new ActionRowBuilder<TextInputBuilder>().addComponents(action);
 
-      modal.addComponents(reasonRow, usernameRow, actionRow);
+      modal.addComponents(reasonRow, usernameRow);
 
       await interaction.showModal(modal);
     } else if (subcommand === "list") {
@@ -96,7 +89,7 @@ export const command: Command = {
         if (watchlist.length === 0) {
           await interaction.reply({
             content: "Denne bruger er ikke på watchlisten",
-            ephemeral: true,
+            flags: ['Ephemeral']
           });
           return;
         }
@@ -111,7 +104,7 @@ export const command: Command = {
           .setDescription(watchlist.map((user: any) => `👤 Bruger: <@${user.userId}>\n🛡️ Staff: <@${user.staffId}>\n🕒 Bruger tilføjet den: ${new Date(user.startTime).toLocaleString("da-DK", { hour12: false })}\n📄 Grundlag: ${user.reason}\nHvilken handling er blevet taget?: ${user.action}\n🔔 Antal advarsler: ${warningCounts[user.userId] || 0}`).join("\n"))
           .setTimestamp();
 
-        await interaction.reply({ embeds: [embed], ephemeral: true });
+        await interaction.reply({ embeds: [embed], flags: ['Ephemeral'] });
         return;
       }
       const watchlist = await prisma.watchList.findMany();
@@ -171,7 +164,7 @@ export const command: Command = {
       if (!user) {
         await interaction.reply({
           content: "Du skal huske at angive en bruger",
-          ephemeral: true,
+          flags: ['Ephemeral']
         });
         return;
       }
@@ -183,7 +176,7 @@ export const command: Command = {
       if (!userToRemove) {
         await interaction.reply({
           content: "Denne bruger er ikke på watchlisten",
-          ephemeral: true,
+          flags: ['Ephemeral']
         });
         return;
       }

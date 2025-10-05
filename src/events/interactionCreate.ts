@@ -24,13 +24,15 @@ export const event = {
         console.error(error);
         if (interaction.replied || interaction.deferred) {
           await interaction.followUp({
-            content: "Der opstod en fejl under udførelse af kommandoen! Kontakt .the_gamer hvis dette fortsætter.",
-            ephemeral: true,
+            content:
+              "Der opstod en fejl under udførelse af kommandoen! Kontakt .the_gamer hvis dette fortsætter.",
+            flags: ['Ephemeral']
           });
         } else {
           await interaction.reply({
-            content: "Der opstod en fejl under udførelse af kommandoen! Kontakt .the_gamer hvis dette fortsætter.",
-            ephemeral: true,
+            content:
+              "Der opstod en fejl under udførelse af kommandoen! Kontakt .the_gamer hvis dette fortsætter.",
+            flags: ['Ephemeral']
           });
         }
       }
@@ -52,12 +54,43 @@ export const event = {
         if (interaction.replied || interaction.deferred) {
           await interaction.followUp({
             content: "Der opstod en fejl!",
-            ephemeral: true,
+            flags: ['Ephemeral']
           });
         } else {
           await interaction.reply({
             content: "Der opstod en fejl!",
-            ephemeral: true,
+            flags: ['Ephemeral']
+          });
+        }
+      }
+    }
+
+    // Handle select menu interactions
+    if (interaction.isStringSelectMenu()) {
+      const selectMenu = client.selectMenuHandler.getSelectMenu(
+        interaction.customId
+      );
+
+      if (!selectMenu) {
+        console.error(
+          `No select menu handler found for ${interaction.customId}`
+        );
+        return;
+      }
+
+      try {
+        await selectMenu.execute(interaction);
+      } catch (error) {
+        console.error(error);
+        if (interaction.replied || interaction.deferred) {
+          await interaction.followUp({
+            content: "Der opstod en fejl!",
+            flags: ['Ephemeral']
+          });
+        } else {
+          await interaction.reply({
+            content: "Der opstod en fejl!",
+            flags: ['Ephemeral']
           });
         }
       }
