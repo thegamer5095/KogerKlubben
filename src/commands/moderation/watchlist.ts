@@ -76,6 +76,7 @@ export const command: Command = {
 
       await interaction.showModal(modal);
     } else if (subcommand === "list") {
+      await interaction.deferReply({ ephemeral: true });
 
       const user = interaction.options.getUser("person");
 
@@ -87,9 +88,8 @@ export const command: Command = {
         });
 
         if (watchlist.length === 0) {
-          await interaction.reply({
-            content: "Denne bruger er ikke på watchlisten",
-            flags: ['Ephemeral']
+          await interaction.editReply({
+            content: "Denne bruger er ikke på watchlisten"
           });
           return;
         }
@@ -104,7 +104,7 @@ export const command: Command = {
           .setDescription(watchlist.map((user: any) => `👤 Bruger: <@${user.userId}>\n🛡️ Staff: <@${user.staffId}>\n🕒 Bruger tilføjet den: ${new Date(user.startTime).toLocaleString("da-DK", { hour12: false })}\n📄 Grundlag: ${user.reason}\nHvilken handling er blevet taget?: ${user.action}\n🔔 Antal advarsler: ${warningCounts[user.userId] || 0}`).join("\n"))
           .setTimestamp();
 
-        await interaction.reply({ embeds: [embed], flags: ['Ephemeral'] });
+        await interaction.editReply({ embeds: [embed] });
         return;
       }
       const watchlist = await prisma.watchList.findMany();
@@ -156,15 +156,16 @@ export const command: Command = {
       if (embeds.length > 1) {
         await embedPages(interaction.client, interaction, embeds);
       } else {
-        await interaction.reply({ embeds: embeds });
+        await interaction.editReply({ embeds: embeds });
       }
     } else if (subcommand === "fjern") {
+      await interaction.deferReply({ ephemeral: true });
+
       const user = interaction.options.getUser("person");
 
       if (!user) {
-        await interaction.reply({
-          content: "Du skal huske at angive en bruger",
-          flags: ['Ephemeral']
+        await interaction.editReply({
+          content: "Du skal huske at angive en bruger"
         });
         return;
       }
@@ -174,9 +175,8 @@ export const command: Command = {
       const userToRemove = watchlist.find((entry: any) => entry.userId === user.id);
 
       if (!userToRemove) {
-        await interaction.reply({
-          content: "Denne bruger er ikke på watchlisten",
-          flags: ['Ephemeral']
+        await interaction.editReply({
+          content: "Denne bruger er ikke på watchlisten"
         });
         return;
       }
@@ -194,7 +194,7 @@ export const command: Command = {
         },
       });
 
-      await interaction.reply({ embeds: [embed] });
+      await interaction.editReply({ embeds: [embed] });
     }
   },
 };

@@ -1,6 +1,7 @@
 import { StringSelectMenuInteraction, EmbedBuilder } from "discord.js";
 import { SelectMenu } from "../../interfaces/SelectMenu";
 import config from "../../config.json";
+import prisma from "../../utils/database";
 
 export const selectMenu: SelectMenu = {
   customId: "punishment-select",
@@ -44,71 +45,84 @@ export const selectMenu: SelectMenu = {
         punishmentText = "Timeout (1 time)";
         punishmentEmoji = "⏰";
 
-        const user = await interaction.guild?.members.fetch(userId);
-
-        if (!user) {
+        try {
+          const user = await interaction.guild?.members.fetch(userId);
+          await user?.timeout(1 * 60 * 60 * 1000);
+        } catch (error) {
           await interaction.reply({
             content: "Brugerne har forladt discorden, og jeg kan derfor ikke give en timeout!",
             flags: ['Ephemeral']
-          })
+          });
           return;
         }
-
-        await user?.timeout(1 * 60 * 60 * 1000);
         break;
       case "timeout_10min":
         punishmentText = "Timeout (24 timer)";
         punishmentEmoji = "⏰";
 
-        const twoUser = await interaction.guild?.members.fetch(userId);
-
-        if (!twoUser) {
+        try {
+          const twoUser = await interaction.guild?.members.fetch(userId);
+          await twoUser?.timeout(24 * 60 * 60 * 1000);
+        } catch (error) {
           await interaction.reply({
             content: "Brugerne har forladt discorden, og jeg kan derfor ikke give en timeout!",
             flags: ['Ephemeral']
-          })
+          });
           return;
         }
-
-        await twoUser?.timeout(24 * 60 * 60 * 1000);
         break;
       case "timeout_1hour":
         punishmentText = "Timeout (7 dage)";
         punishmentEmoji = "⏰";
 
-        const sevenUser = await interaction.guild?.members.fetch(userId);
-
-        if (!sevenUser) {
+        try {
+          const sevenUser = await interaction.guild?.members.fetch(userId);
+          await sevenUser?.timeout(7 * 24 * 60 * 60 * 1000);
+        } catch (error) {
           await interaction.reply({
             content: "Brugerne har forladt discorden, og jeg kan derfor ikke give en timeout!",
             flags: ['Ephemeral']
-          })
+          });
           return;
         }
-
-        await sevenUser?.timeout(7 * 24 * 60 * 60 * 1000);
         break;
       case "kick":
         punishmentText = "Kick";
         punishmentEmoji = "👢";
 
-        const kickUser = await interaction.guild?.members.fetch(userId);
-
-        if (!kickUser) {
+        try {
+          const kickUser = await interaction.guild?.members.fetch(userId);
+          await kickUser?.kick('Kicked via watchlist');
+        } catch (error) {
           await interaction.reply({
             content: "Brugerne har forladt discorden, og jeg kan derfor ikke give et kick!",
             flags: ['Ephemeral']
-          })
+          });
           return;
         }
-
-        await kickUser?.kick('Kicked via watchlist');
         break;
       case "none":
         punishmentText = "Ingen straf";
         punishmentEmoji = "✅";
         break;
     }
+
+    await prisma.watchList.updateMany({
+      where: {
+        userId: userId,
+        action: "pending"
+      },
+      data: {
+        action: punishment
+      }
+    });
+
+    const watchListEntry = await prisma.watchList.findFirst({
+      where: {
+        userId: userId,
+        action: punishment
+      }
+    });
 
     const embed = new EmbedBuilder()
       .setTitle("En ny bruger er blevet oprette på watchlisten!")
@@ -118,7 +132,7 @@ export const selectMenu: SelectMenu = {
         }>\n🕒 Advarsel givet klokken: ${new Date().toLocaleTimeString(
           "da-DK",
           { hour12: false }
-        )}\n${punishmentEmoji} Straf: ${punishmentText}`
+        )}\n${punishmentEmoji} Straf: ${punishmentText}\n📝 Grundlag: ${watchListEntry?.reason || "Ingen grundlag angivet"}`
       )
       .setThumbnail(interaction.user.displayAvatarURL())
       .setTimestamp();

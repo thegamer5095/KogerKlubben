@@ -46,12 +46,21 @@ export const embedPages = async (
     text: `Page ${pages[id] + 1} from ${Pagemax}`,
   });
 
-  const replyEmbed = (await interaction.reply({
-    embeds: [embed],
-    components: [getRow(id)],
-    ephemeral: true,
-    fetchReply: true,
-  })) as Message;
+  let replyEmbed: Message;
+  if (interaction.deferred || interaction.replied) {
+    await interaction.editReply({
+      embeds: [embed],
+      components: [getRow(id)],
+    });
+    replyEmbed = (await interaction.fetchReply()) as Message;
+  } else {
+    replyEmbed = (await interaction.reply({
+      embeds: [embed],
+      components: [getRow(id)],
+      ephemeral: true,
+      fetchReply: true,
+    })) as Message;
+  }
 
   const filter = (i: MessageComponentInteraction) =>
     i.user.id === interaction.user.id;

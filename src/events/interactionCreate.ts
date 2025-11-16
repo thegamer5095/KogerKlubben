@@ -22,18 +22,22 @@ export const event = {
         await command.execute(interaction);
       } catch (error) {
         console.error(error);
-        if (interaction.replied || interaction.deferred) {
-          await interaction.followUp({
-            content:
-              "Der opstod en fejl under udførelse af kommandoen! Kontakt .the_gamer hvis dette fortsætter.",
-            flags: ['Ephemeral']
-          });
-        } else {
-          await interaction.reply({
-            content:
-              "Der opstod en fejl under udførelse af kommandoen! Kontakt .the_gamer hvis dette fortsætter.",
-            flags: ['Ephemeral']
-          });
+        try {
+          if (interaction.replied || interaction.deferred) {
+            await interaction.followUp({
+              content:
+                "Der opstod en fejl under udførelse af kommandoen! Kontakt .the_gamer hvis dette fortsætter.",
+              flags: ['Ephemeral']
+            });
+          } else {
+            await interaction.reply({
+              content:
+                "Der opstod en fejl under udførelse af kommandoen! Kontakt .the_gamer hvis dette fortsætter.",
+              flags: ['Ephemeral']
+            });
+          }
+        } catch (replyError) {
+          console.error("Failed to send error message:", replyError);
         }
       }
     }
@@ -51,16 +55,20 @@ export const event = {
         await button.execute(interaction);
       } catch (error) {
         console.error(error);
-        if (interaction.replied || interaction.deferred) {
-          await interaction.followUp({
-            content: "Der opstod en fejl!",
-            flags: ['Ephemeral']
-          });
-        } else {
-          await interaction.reply({
-            content: "Der opstod en fejl!",
-            flags: ['Ephemeral']
-          });
+        try {
+          if (interaction.replied || interaction.deferred) {
+            await interaction.followUp({
+              content: "Der opstod en fejl!",
+              flags: ['Ephemeral']
+            });
+          } else {
+            await interaction.reply({
+              content: "Der opstod en fejl!",
+              flags: ['Ephemeral']
+            });
+          }
+        } catch (replyError) {
+          console.error("Failed to send error message:", replyError);
         }
       }
     }
@@ -82,16 +90,20 @@ export const event = {
         await selectMenu.execute(interaction);
       } catch (error) {
         console.error(error);
-        if (interaction.replied || interaction.deferred) {
-          await interaction.followUp({
-            content: "Der opstod en fejl!",
-            flags: ['Ephemeral']
-          });
-        } else {
-          await interaction.reply({
-            content: "Der opstod en fejl!",
-            flags: ['Ephemeral']
-          });
+        try {
+          if (interaction.replied || interaction.deferred) {
+            await interaction.followUp({
+              content: "Der opstod en fejl!",
+              flags: ['Ephemeral']
+            });
+          } else {
+            await interaction.reply({
+              content: "Der opstod en fejl!",
+              flags: ['Ephemeral']
+            });
+          }
+        } catch (replyError) {
+          console.error("Failed to send error message:", replyError);
         }
       }
     }

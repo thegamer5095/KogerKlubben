@@ -13,7 +13,6 @@ export const modal: Modal = {
   execute: async (interaction: ModalSubmitInteraction) => {
     const user = interaction.fields.getTextInputValue("username");
     const grundlag = interaction.fields.getTextInputValue("reason");
-    const action = interaction.fields.getTextInputValue("action");
 
     const session = await prisma.watchList.create({
       data: {
@@ -21,8 +20,8 @@ export const modal: Modal = {
         staffId: interaction.user.id,
         startTime: new Date(),
         reason: grundlag,
-        action: action,
-      } as any,
+        action: "pending",
+      },
     });
 
     if (!session) {
@@ -75,7 +74,7 @@ export const modal: Modal = {
     );
 
     await interaction.reply({
-      content: `Brugeren <@${user}> er blevet tilføjet til watchlisten.\n**Grundlag:** ${grundlag}\n**Handling:** ${action}\n\nVælg nu hvilken straf der skal gives:`,
+      content: `Brugeren <@${user}> er blevet tilføjet til watchlisten.\n**Grundlag:** ${grundlag}\n**Handling:** Afventer strafvalg\n\nVælg nu hvilken straf der skal gives:`,
       components: [row],
       flags: ['Ephemeral']
     });
