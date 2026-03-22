@@ -1,10 +1,12 @@
-import { Client, Collection, REST, Routes } from "discord.js";
+import { Collection, REST, Routes } from "discord.js";
 import { readdirSync } from "fs";
 import { join } from "path";
 import { Command } from "../interfaces/Command";
 import { ContextMenuCommand } from "../interfaces/ContextMenuCommand";
 import { Bot } from "../index";
 import config from "../config.json";
+
+const scriptExt = process.env.NODE_ENV === "production" ? ".js" : ".ts";
 
 export class CommandHandler {
   private client: Bot;
@@ -21,11 +23,8 @@ export class CommandHandler {
     const commandPath = join(__dirname, "..", "commands");
 
     for (const dir of readdirSync(commandPath)) {
-      // Check for both .ts and .js files depending on environment
-      const fileExtension =
-        process.env.NODE_ENV === "production" ? ".js" : ".ts";
       const commands = readdirSync(join(commandPath, dir)).filter((file) =>
-        file.endsWith(fileExtension)
+        file.endsWith(scriptExt)
       );
 
       for (const file of commands) {
@@ -49,10 +48,8 @@ export class CommandHandler {
     const commandPath = join(__dirname, "..", "context-menus");
 
     for (const dir of readdirSync(commandPath)) {
-      const fileExtension =
-        process.env.NODE_ENV === "production" ? ".js" : ".ts";
       const files = readdirSync(join(commandPath, dir)).filter((file) =>
-        file.endsWith(fileExtension)
+        file.endsWith(scriptExt)
       );
 
       for (const file of files) {
@@ -94,8 +91,6 @@ export class CommandHandler {
         );
         return;
       }
-
-      console.log("Commands being registered:", commands);
 
       await rest.put(Routes.applicationCommands(config.bot.clientId), {
         body: commands,

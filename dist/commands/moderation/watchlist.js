@@ -53,6 +53,13 @@ async function removeWatchlistUser(interaction, user) {
     });
     await interaction.editReply({ embeds: [embed] });
 }
+function chunkArray(arr, size) {
+    const result = [];
+    for (let i = 0; i < arr.length; i += size) {
+        result.push(arr.slice(i, i + size));
+    }
+    return result;
+}
 exports.command = {
     data: new discord_js_1.SlashCommandBuilder()
         .setName("watchlist")
@@ -89,7 +96,6 @@ exports.command = {
             const username = new discord_js_1.TextInputBuilder()
                 .setCustomId("username")
                 .setLabel("Hvad er denne brugers discord ID?")
-                //.setPlaceholder('Hvis du ikke ved hvordan man finder en bruges id, kan denne guide hjælpe dig: https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID-')
                 .setStyle(discord_js_1.TextInputStyle.Short)
                 .setRequired(true);
             const reasonRow = new discord_js_1.ActionRowBuilder().addComponents(reason);
@@ -105,31 +111,21 @@ exports.command = {
                 return;
             }
             const watchlist = await database_1.default.watchList.findMany();
-            // Count the number of entries per userId
             const warningCounts = {};
             for (const entry of watchlist) {
                 warningCounts[entry.userId] = (warningCounts[entry.userId] || 0) + 1;
             }
-            // Only show unique users (one entry per user in the list)
             const uniqueUsers = Object.values(watchlist.reduce((acc, entry) => {
                 if (!acc[entry.userId])
                     acc[entry.userId] = entry;
                 return acc;
             }, {}));
-            // Helper to chunk array into groups of 5
-            function chunkArray(arr, size) {
-                const result = [];
-                for (let i = 0; i < arr.length; i += size) {
-                    result.push(arr.slice(i, i + size));
-                }
-                return result;
-            }
             const chunks = chunkArray(uniqueUsers, 5);
             const embeds = chunks.map((chunk) => {
                 return new discord_js_1.EmbedBuilder()
                     .setTitle("Watchlisten")
                     .setDescription(chunk
-                    .map((user) => `👤 Bruger: <@${user.userId}>\n🛡️ Staff: <@${user.staffId}\n🕒 Bruger tilføjet den: ${new Date(user.startTime).toLocaleString("da-DK", { hour12: false })}\n📄 Grundlag: ${user.reason}\nHvilken handling er blevet taget?: ${user.action}\n🔔 Antal advarsler: ${warningCounts[user.userId] || 0}`)
+                    .map((entry) => `👤 Bruger: <@${entry.userId}>\n🛡️ Staff: <@${entry.staffId}>\n🕒 Bruger tilføjet den: ${new Date(entry.startTime).toLocaleString("da-DK", { hour12: false })}\n📄 Grundlag: ${entry.reason}\nHvilken handling er blevet taget?: ${entry.action}\n🔔 Antal advarsler: ${warningCounts[entry.userId] || 0}`)
                     .join("\n----------------------\n"))
                     .setTimestamp();
             });

@@ -1,7 +1,4 @@
-import { ActivityType, Client, Events } from 'discord.js';
-import config from '../config.json'
-import axios from 'axios'
-
+import { ActivityType, Client, Events } from "discord.js";
 
 export const event = {
     name: Events.ClientReady,

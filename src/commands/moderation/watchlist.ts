@@ -93,6 +93,14 @@ export async function removeWatchlistUser(
   await interaction.editReply({ embeds: [embed] });
 }
 
+function chunkArray<T>(arr: T[], size: number): T[][] {
+  const result: T[][] = [];
+  for (let i = 0; i < arr.length; i += size) {
+    result.push(arr.slice(i, i + size));
+  }
+  return result;
+}
+
 export const command: Command = {
   data: new SlashCommandBuilder()
     .setName("watchlist")
@@ -129,7 +137,6 @@ export const command: Command = {
     const subcommand = interaction.options.getSubcommand();
 
     if (subcommand === "opret") {
-
       const modal = new ModalBuilder()
         .setCustomId("add-watchlist")
         .setTitle(`Tilføjelse af en bruger til watchlisten`);
@@ -143,7 +150,6 @@ export const command: Command = {
       const username = new TextInputBuilder()
         .setCustomId("username")
         .setLabel("Hvad er denne brugers discord ID?")
-        //.setPlaceholder('Hvis du ikke ved hvordan man finder en bruges id, kan denne guide hjælpe dig: https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID-')
         .setStyle(TextInputStyle.Short)
         .setRequired(true);
 
@@ -166,28 +172,23 @@ export const command: Command = {
         return;
       }
       const watchlist = await prisma.watchList.findMany();
-      // Count the number of entries per userId
       const warningCounts: Record<string, number> = {};
       for (const entry of watchlist) {
         warningCounts[entry.userId] = (warningCounts[entry.userId] || 0) + 1;
       }
 
-      // Only show unique users (one entry per user in the list)
       const uniqueUsers = Object.values(
-        watchlist.reduce((acc: Record<string, (typeof watchlist)[0]>, entry: (typeof watchlist)[0]) => {
-          if (!acc[entry.userId]) acc[entry.userId] = entry;
-          return acc;
-        }, {} as Record<string, (typeof watchlist)[0]>)
+        watchlist.reduce(
+          (
+            acc: Record<string, (typeof watchlist)[0]>,
+            entry: (typeof watchlist)[0]
+          ) => {
+            if (!acc[entry.userId]) acc[entry.userId] = entry;
+            return acc;
+          },
+          {} as Record<string, (typeof watchlist)[0]>
+        )
       );
-
-      // Helper to chunk array into groups of 5
-      function chunkArray<T>(arr: T[], size: number): T[][] {
-        const result: T[][] = [];
-        for (let i = 0; i < arr.length; i += size) {
-          result.push(arr.slice(i, i + size));
-        }
-        return result;
-      }
 
       const chunks = chunkArray(uniqueUsers, 5);
 
@@ -197,14 +198,14 @@ export const command: Command = {
           .setDescription(
             chunk
               .map(
-                (user: any) =>
-                  `👤 Bruger: <@${user.userId}>\n🛡️ Staff: <@${
-                    user.staffId
-                  }\n🕒 Bruger tilføjet den: ${new Date(
-                    user.startTime
+                (entry) =>
+                  `👤 Bruger: <@${entry.userId}>\n🛡️ Staff: <@${
+                    entry.staffId
+                  }>\n🕒 Bruger tilføjet den: ${new Date(
+                    entry.startTime
                   ).toLocaleString("da-DK", { hour12: false })}\n📄 Grundlag: ${
-                    user.reason
-                  }\nHvilken handling er blevet taget?: ${user.action}\n🔔 Antal advarsler: ${warningCounts[user.userId] || 0}`
+                    entry.reason
+                  }\nHvilken handling er blevet taget?: ${entry.action}\n🔔 Antal advarsler: ${warningCounts[entry.userId] || 0}`
               )
               .join("\n----------------------\n")
           )

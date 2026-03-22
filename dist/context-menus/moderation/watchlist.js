@@ -6,17 +6,6 @@ const watchlist_1 = require("../../commands/moderation/watchlist");
 exports.contextMenus = [
     {
         data: new discord_js_1.ContextMenuCommandBuilder()
-            .setName("Se watchlisten")
-            .setType(discord_js_1.ApplicationCommandType.User)
-            .setDefaultMemberPermissions(discord_js_1.PermissionFlagsBits.KickMembers),
-        execute: async (interaction) => {
-            const { targetUser } = interaction;
-            await interaction.deferReply({ ephemeral: true });
-            await (0, watchlist_1.showWatchlistForUser)(interaction, targetUser);
-        },
-    },
-    {
-        data: new discord_js_1.ContextMenuCommandBuilder()
             .setName("Tilføj til watchlisten")
             .setType(discord_js_1.ApplicationCommandType.User)
             .setDefaultMemberPermissions(discord_js_1.PermissionFlagsBits.KickMembers),
