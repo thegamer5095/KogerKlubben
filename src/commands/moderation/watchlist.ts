@@ -1,5 +1,6 @@
 import {
   ActionRowBuilder,
+  ChatInputCommandInteraction,
   EmbedBuilder,
   ModalBuilder,
   PermissionFlagsBits,
@@ -7,10 +8,90 @@ import {
   SlashCommandSubcommandBuilder,
   TextInputBuilder,
   TextInputStyle,
+  User,
+  UserContextMenuCommandInteraction,
 } from "discord.js";
 import { Command } from "../../interfaces/Command";
 import prisma from "../../utils/database";
-import { embedPages } from "../../handlers/pages"; // Adjust path if needed
+import { embedPages } from "../../handlers/pages";
+
+export async function showWatchlistForUser(
+  interaction:
+    | ChatInputCommandInteraction
+    | UserContextMenuCommandInteraction,
+  user: User
+) {
+  const watchlist = await prisma.watchList.findMany({
+    where: {
+      userId: user.id,
+    },
+  });
+
+  if (watchlist.length === 0) {
+    await interaction.editReply({
+      content: "Denne bruger er ikke på watchlisten",
+    });
+    return;
+  }
+
+  const warningCounts: Record<string, number> = {};
+  for (const entry of watchlist) {
+    warningCounts[entry.userId] = (warningCounts[entry.userId] || 0) + 1;
+  }
+
+  const embed = new EmbedBuilder()
+    .setTitle(`${user.username} watchlisten`)
+    .setDescription(
+      watchlist
+        .map(
+          (entry: any) =>
+            `👤 Bruger: <@${entry.userId}>\n🛡️ Staff: <@${entry.staffId}>\n🕒 Bruger tilføjet den: ${new Date(
+              entry.startTime
+            ).toLocaleString("da-DK", { hour12: false })}\n📄 Grundlag: ${
+              entry.reason
+            }\nHvilken handling er blevet taget?: ${entry.action}\n🔔 Antal advarsler: ${
+              warningCounts[entry.userId] || 0
+            }`
+        )
+        .join("\n")
+    )
+    .setTimestamp();
+
+  await interaction.editReply({ embeds: [embed] });
+}
+
+export async function removeWatchlistUser(
+  interaction:
+    | ChatInputCommandInteraction
+    | UserContextMenuCommandInteraction,
+  user: User
+) {
+  const watchlist = await prisma.watchList.findMany();
+
+  const userToRemove = watchlist.find((entry: any) => entry.userId === user.id);
+
+  if (!userToRemove) {
+    await interaction.editReply({
+      content: "Denne bruger er ikke på watchlisten",
+    });
+    return;
+  }
+
+  const embed = new EmbedBuilder()
+    .setTitle("Bruger fjernet fra watchlisten")
+    .setDescription(
+      `👤 Bruger: <@${userToRemove.userId}>\n🛡️ Staff: <@${userToRemove.staffId}>`
+    )
+    .setTimestamp();
+
+  await prisma.watchList.delete({
+    where: {
+      id: userToRemove.id,
+    },
+  });
+
+  await interaction.editReply({ embeds: [embed] });
+}
 
 export const command: Command = {
   data: new SlashCommandBuilder()
@@ -81,30 +162,7 @@ export const command: Command = {
       const user = interaction.options.getUser("person");
 
       if (user) {
-        const watchlist = await prisma.watchList.findMany({
-          where: {
-            userId: user.id,
-          },
-        });
-
-        if (watchlist.length === 0) {
-          await interaction.editReply({
-            content: "Denne bruger er ikke på watchlisten"
-          });
-          return;
-        }
-
-        const warningCounts: Record<string, number> = {};
-        for (const entry of watchlist) {
-          warningCounts[entry.userId] = (warningCounts[entry.userId] || 0) + 1;
-        }
-
-        const embed = new EmbedBuilder()
-          .setTitle(`${user.username} watchlisten`) 
-          .setDescription(watchlist.map((user: any) => `👤 Bruger: <@${user.userId}>\n🛡️ Staff: <@${user.staffId}>\n🕒 Bruger tilføjet den: ${new Date(user.startTime).toLocaleString("da-DK", { hour12: false })}\n📄 Grundlag: ${user.reason}\nHvilken handling er blevet taget?: ${user.action}\n🔔 Antal advarsler: ${warningCounts[user.userId] || 0}`).join("\n"))
-          .setTimestamp();
-
-        await interaction.editReply({ embeds: [embed] });
+        await showWatchlistForUser(interaction, user);
         return;
       }
       const watchlist = await prisma.watchList.findMany();
@@ -170,31 +228,7 @@ export const command: Command = {
         return;
       }
 
-      const watchlist = await prisma.watchList.findMany();
-
-      const userToRemove = watchlist.find((entry: any) => entry.userId === user.id);
-
-      if (!userToRemove) {
-        await interaction.editReply({
-          content: "Denne bruger er ikke på watchlisten"
-        });
-        return;
-      }
-
-      const embed = new EmbedBuilder()
-        .setTitle("Bruger fjernet fra watchlisten")
-        .setDescription(
-          `👤 Bruger: <@${userToRemove.userId}>\n🛡️ Staff: <@${userToRemove.staffId}>`
-        )
-        .setTimestamp();
-
-      await prisma.watchList.delete({
-        where: {
-          id: userToRemove.id,
-        },
-      });
-
-      await interaction.editReply({ embeds: [embed] });
+      await removeWatchlistUser(interaction, user);
     }
   },
 };

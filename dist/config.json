@@ -1,0 +1,26 @@
+{
+    "bot": {
+        "token": "MTM5MzE3NTYwMDAyMTM3MzAxOQ.G7YC8v.XTdm406HUj4EGnunVf_rI2TivdIp9O3HxA997Q",
+        "clientId": "1393175600021373019",
+        "color": "Blue"
+    },
+    "roles": {
+        "staffId": "839084638503960587",
+        "DeveloperId": "847403673012797470",
+        "afvwlRole": "847403673012797470",
+        "moderatorRole": "839084638503960587"
+    },
+    "channels": {
+        "watchchannel": "1399109464010915901",
+        "logs": "1399109464010915901",
+        "ticketChannel": "844614175997427793"
+    },
+    "database": {
+        "enabled": false,
+        "DB_HOST": "localhost",
+        "DB_USER": "root",
+        "DB_PASSWORD": "",
+        "DB_NAME": "complex",
+        "DB_PORT": "3306"
+    }
+}

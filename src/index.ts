@@ -1,5 +1,6 @@
 import { Client, Collection, GatewayIntentBits } from "discord.js";
 import { Command } from "./interfaces/Command";
+import { ContextMenuCommand } from "./interfaces/ContextMenuCommand";
 import { Modal } from "./interfaces/Modal";
 import { SelectMenu } from "./interfaces/SelectMenu";
 import { CommandHandler } from "./handlers/CommandHandler";
@@ -12,6 +13,7 @@ import { db } from "./utils/mysql";
 
 export class Bot extends Client {
   public commands: Collection<string, Command>;
+  public contextMenus: Collection<string, ContextMenuCommand>;
   public modals: Collection<string, Modal>;
   public buttons: Collection<string, any>;
   public selectMenus: Collection<string, SelectMenu>;
@@ -32,6 +34,7 @@ export class Bot extends Client {
     });
 
     this.commands = new Collection();
+    this.contextMenus = new Collection();
     this.modals = new Collection();
     this.buttons = new Collection();
     this.selectMenus = new Collection();
@@ -50,6 +53,8 @@ export class Bot extends Client {
       }
 
       await this.commandHandler.loadCommands();
+      await this.commandHandler.loadContextMenus();
+      await this.commandHandler.registerCommands();
       await this.eventHandler.loadEvents();
       await this.modalHandler.loadModals();
       await this.buttonHandler.loadButtons();

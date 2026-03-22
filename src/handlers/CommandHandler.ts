@@ -2,16 +2,19 @@ import { Client, Collection, REST, Routes } from "discord.js";
 import { readdirSync } from "fs";
 import { join } from "path";
 import { Command } from "../interfaces/Command";
+import { ContextMenuCommand } from "../interfaces/ContextMenuCommand";
 import { Bot } from "../index";
 import config from "../config.json";
 
 export class CommandHandler {
   private client: Bot;
   private commands: Collection<string, Command>;
+  private contextMenus: Collection<string, ContextMenuCommand>;
 
   constructor(client: Bot) {
     this.client = client;
     this.commands = new Collection();
+    this.contextMenus = new Collection();
   }
 
   async loadCommands() {
@@ -38,20 +41,52 @@ export class CommandHandler {
       }
     }
 
-    // Set the commands on the client
     this.client.commands = this.commands;
     return this.commands;
   }
 
+  async loadContextMenus() {
+    const commandPath = join(__dirname, "..", "context-menus");
+
+    for (const dir of readdirSync(commandPath)) {
+      const fileExtension =
+        process.env.NODE_ENV === "production" ? ".js" : ".ts";
+      const files = readdirSync(join(commandPath, dir)).filter((file) =>
+        file.endsWith(fileExtension)
+      );
+
+      for (const file of files) {
+        const mod = await import(join(commandPath, dir, file));
+        if (Array.isArray(mod.contextMenus)) {
+          for (const cm of mod.contextMenus as ContextMenuCommand[]) {
+            if (cm?.data) {
+              this.contextMenus.set(cm.data.name, cm);
+              console.log(`Loaded context menu: ${cm.data.name}`);
+            }
+          }
+        }
+      }
+    }
+
+    this.client.contextMenus = this.contextMenus;
+    return this.contextMenus;
+  }
+
   async registerCommands() {
     const rest = new REST().setToken(config.bot.token);
-    const commands = [...this.commands.values()].map((command) =>
+    const slashPayload = [...this.commands.values()].map((command) =>
       command.data.toJSON()
     );
+    const contextPayload = [...this.contextMenus.values()].map((cm) =>
+      cm.data.toJSON()
+    );
+    const commands = [...slashPayload, ...contextPayload];
 
     try {
       console.log("Started refreshing application (/) commands.");
-      console.log(`Found ${commands.length} commands to register`);
+      console.log(
+        `Found ${slashPayload.length} slash commands and ${contextPayload.length} context menus to register`
+      );
 
       if (commands.length === 0) {
         console.warn(

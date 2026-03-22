@@ -7,7 +7,43 @@ export const event = {
   async execute(interaction: Interaction) {
     const client = interaction.client as Bot;
 
-    // Handle slash commands
+    if (interaction.isContextMenuCommand()) {
+      if (interaction.isUserContextMenuCommand()) {
+        const contextMenu = client.contextMenus.get(interaction.commandName);
+
+        if (!contextMenu) {
+          console.error(
+            `No user context menu matching ${interaction.commandName} was found.`
+          );
+          return;
+        }
+
+        try {
+          await contextMenu.execute(interaction);
+        } catch (error) {
+          console.error(error);
+          try {
+            if (interaction.replied || interaction.deferred) {
+              await interaction.followUp({
+                content:
+                  "Der opstod en fejl under udførelse af kommandoen! Kontakt .the_gamer hvis dette fortsætter.",
+                flags: ["Ephemeral"],
+              });
+            } else {
+              await interaction.reply({
+                content:
+                  "Der opstod en fejl under udførelse af kommandoen! Kontakt .the_gamer hvis dette fortsætter.",
+                flags: ["Ephemeral"],
+              });
+            }
+          } catch (replyError) {
+            console.error("Failed to send error message:", replyError);
+          }
+        }
+        return;
+      }
+    }
+
     if (interaction.isChatInputCommand()) {
       const command = client.commands.get(interaction.commandName);
 
