@@ -28,3 +28,10 @@ model Blacklist {
   staffId String
   reason  String?
 }
+
+model ContentBlockRule {
+  id        Int      @id @default(autoincrement())
+  pattern   String   @unique
+  createdAt DateTime @default(now())
+  staffId   String
+}

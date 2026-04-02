@@ -4,6 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Bot = void 0;
+require("dotenv/config");
 const discord_js_1 = require("discord.js");
 const CommandHandler_1 = require("./handlers/CommandHandler");
 const EventHandler_1 = require("./handlers/EventHandler");

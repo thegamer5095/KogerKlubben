@@ -8,12 +8,22 @@
         "staffId": "839084638503960587",
         "DeveloperId": "847403673012797470", 
         "afvwlRole": "847403673012797470",
-        "moderatorRole": "839084638503960587"
+        "moderatorRole": "839084638503960587",
+        "pingStream": "847403673012797470",
+        "pingNyheder": "847403673012797470",
+        "pingYoutube": "847403673012797470"
     },
     "channels": {
-        "watchchannel": "1399109464010915901",
-        "logs": "1399109464010915901",
-        "ticketChannel": "844614175997427793"
+        "watchchannel": "833402838692003871",
+        "logs": "833402838692003871",
+        "ticketChannel": "833402838692003871"
+    },
+    "contentAlerts": {
+        "enabled": true,
+        "pollIntervalSeconds": 120,
+        "announceChannelId": "844614175997427793",
+        "twitchUserLogins": ["kogerklubben"],
+        "youtubeChannelIds": ["UCRrwjpikVP_esr_St9Hj9kQ"]
     },
     "database": {
         "enabled": false,

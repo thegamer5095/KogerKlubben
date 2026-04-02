@@ -1,4 +1,5 @@
-import { Client, Collection, GatewayIntentBits } from "discord.js";
+import "dotenv/config";
+import { Client, Collection, GatewayIntentBits, Partials } from "discord.js";
 import { Command } from "./interfaces/Command";
 import { ContextMenuCommand } from "./interfaces/ContextMenuCommand";
 import { Modal } from "./interfaces/Modal";
@@ -29,7 +30,13 @@ export class Bot extends Client {
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.GuildMembers,
+        GatewayIntentBits.GuildMessageReactions,
         GatewayIntentBits.MessageContent,
+      ],
+      partials: [
+        Partials.Message,
+        Partials.Channel,
+        Partials.Reaction,
       ],
     });
 
