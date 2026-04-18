@@ -1,4 +1,4 @@
-import "dotenv/config";
+require("dotenv").config();
 import { Client, Collection, GatewayIntentBits, Partials } from "discord.js";
 import { Command } from "./interfaces/Command";
 import { ContextMenuCommand } from "./interfaces/ContextMenuCommand";
