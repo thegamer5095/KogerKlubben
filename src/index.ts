@@ -67,7 +67,11 @@ export class Bot extends Client {
       await this.buttonHandler.loadButtons();
       await this.selectMenuHandler.loadSelectMenus();
 
-      await this.login(config.bot.token);
+      const token = process.env.DISCORD_TOKEN?.trim();
+      if (!token) {
+        throw new Error("Missing DISCORD_TOKEN in environment (.env).");
+      }
+      await this.login(token);
     } catch (error) {
       console.error("[Bot] Failed to initialize:", error);
     }
