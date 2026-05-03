@@ -4,7 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Bot = void 0;
-require("dotenv/config");
+require("dotenv").config();
 const discord_js_1 = require("discord.js");
 const CommandHandler_1 = require("./handlers/CommandHandler");
 const EventHandler_1 = require("./handlers/EventHandler");
@@ -20,7 +20,13 @@ class Bot extends discord_js_1.Client {
                 discord_js_1.GatewayIntentBits.Guilds,
                 discord_js_1.GatewayIntentBits.GuildMessages,
                 discord_js_1.GatewayIntentBits.GuildMembers,
+                discord_js_1.GatewayIntentBits.GuildMessageReactions,
                 discord_js_1.GatewayIntentBits.MessageContent,
+            ],
+            partials: [
+                discord_js_1.Partials.Message,
+                discord_js_1.Partials.Channel,
+                discord_js_1.Partials.Reaction,
             ],
         });
         this.commands = new discord_js_1.Collection();

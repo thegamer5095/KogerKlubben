@@ -42,6 +42,9 @@ const fs_1 = require("fs");
 const path_1 = require("path");
 const config_json_1 = __importDefault(require("../config.json"));
 const scriptExt = process.env.NODE_ENV === "production" ? ".js" : ".ts";
+function discordToken() {
+    return process.env.DISCORD_TOKEN?.trim();
+}
 class CommandHandler {
     constructor(client) {
         this.client = client;
@@ -86,7 +89,12 @@ class CommandHandler {
         return this.contextMenus;
     }
     async registerCommands() {
-        const rest = new discord_js_1.REST().setToken(config_json_1.default.bot.token);
+        const token = discordToken();
+        if (!token) {
+            console.error("Cannot register commands: DISCORD_TOKEN is missing in the environment.");
+            return;
+        }
+        const rest = new discord_js_1.REST().setToken(token);
         const slashPayload = [...this.commands.values()].map((command) => command.data.toJSON());
         const contextPayload = [...this.contextMenus.values()].map((cm) => cm.data.toJSON());
         const commands = [...slashPayload, ...contextPayload];

@@ -13,7 +13,7 @@ exports.command = {
         .setDefaultMemberPermissions(discord_js_1.PermissionFlagsBits.ManageGuild)
         .addSubcommand(new discord_js_1.SlashCommandSubcommandBuilder()
         .setName("check")
-        .setDescription("Tjek Twitch API, YouTube RSS og announce-kanal"))
+        .setDescription("Tjek Twitch API, YouTube RSS og Twitch/YouTube announce-kanaler"))
         .addSubcommand(new discord_js_1.SlashCommandSubcommandBuilder()
         .setName("preview")
         .setDescription("Send test-embeds i denne kanal (som ved rigtige beskeder)")),
@@ -21,12 +21,12 @@ exports.command = {
         const sub = interaction.options.getSubcommand(true);
         if (sub === "check") {
             await interaction.deferReply({ ephemeral: true });
-            const { twitch, youtube, announce } = await (0, contentAlerts_1.runContentAlertsDiagnostics)(interaction.client);
-            const allOk = twitch.ok && youtube.ok && announce.ok;
+            const { twitch, youtube, announceTwitch, announceYoutube } = await (0, contentAlerts_1.runContentAlertsDiagnostics)(interaction.client);
+            const allOk = twitch.ok && youtube.ok && announceTwitch.ok && announceYoutube.ok;
             const embed = new discord_js_1.EmbedBuilder()
                 .setTitle("Content alerts — diagnose")
                 .setColor(allOk ? discord_js_1.Colors.Green : discord_js_1.Colors.Orange)
-                .addFields({ name: `${twitch.ok ? "✅" : "❌"} Twitch`, value: clip(twitch.text), inline: false }, { name: `${youtube.ok ? "✅" : "❌"} YouTube`, value: clip(youtube.text), inline: false }, { name: `${announce.ok ? "✅" : "❌"} Announce-kanal`, value: clip(announce.text), inline: false });
+                .addFields({ name: `${twitch.ok ? "✅" : "❌"} Twitch API`, value: clip(twitch.text), inline: false }, { name: `${youtube.ok ? "✅" : "❌"} YouTube RSS`, value: clip(youtube.text), inline: false }, { name: `${announceTwitch.ok ? "✅" : "❌"} Twitch announce`, value: clip(announceTwitch.text), inline: false }, { name: `${announceYoutube.ok ? "✅" : "❌"} YouTube announce`, value: clip(announceYoutube.text), inline: false });
             await interaction.editReply({ embeds: [embed] });
             return;
         }
@@ -39,10 +39,11 @@ exports.command = {
                 });
                 return;
             }
-            const { twitch, youtube } = (0, contentAlerts_1.buildContentAlertsPreviewEmbeds)();
+            const { twitch, youtube, twitchOutgoing, youtubeOutgoing } = (0, contentAlerts_1.buildContentAlertsPreviewEmbeds)();
             try {
-                await ch.send({ embeds: [twitch, youtube] });
-                await interaction.reply({ content: "Test-embeds sendt.", ephemeral: true });
+                await ch.send({ ...twitchOutgoing, embeds: [twitch] });
+                await ch.send({ ...youtubeOutgoing, embeds: [youtube] });
+                await interaction.reply({ content: "Test-beskeder sendt (Twitch + YouTube, som ved rigtige alerts).", ephemeral: true });
             }
             catch (e) {
                 const msg = e instanceof Error ? e.message : String(e);

@@ -23,7 +23,7 @@ export const command: Command = {
     .addSubcommand(
       new SlashCommandSubcommandBuilder()
         .setName("check")
-        .setDescription("Tjek Twitch API, YouTube RSS og announce-kanal")
+        .setDescription("Tjek Twitch API, YouTube RSS og Twitch/YouTube announce-kanaler")
     )
     .addSubcommand(
       new SlashCommandSubcommandBuilder()
@@ -34,15 +34,18 @@ export const command: Command = {
     const sub = interaction.options.getSubcommand(true);
     if (sub === "check") {
       await interaction.deferReply({ ephemeral: true });
-      const { twitch, youtube, announce } = await runContentAlertsDiagnostics(interaction.client);
-      const allOk = twitch.ok && youtube.ok && announce.ok;
+      const { twitch, youtube, announceTwitch, announceYoutube } =
+        await runContentAlertsDiagnostics(interaction.client);
+      const allOk =
+        twitch.ok && youtube.ok && announceTwitch.ok && announceYoutube.ok;
       const embed = new EmbedBuilder()
         .setTitle("Content alerts — diagnose")
         .setColor(allOk ? Colors.Green : Colors.Orange)
         .addFields(
-          { name: `${twitch.ok ? "✅" : "❌"} Twitch`, value: clip(twitch.text), inline: false },
-          { name: `${youtube.ok ? "✅" : "❌"} YouTube`, value: clip(youtube.text), inline: false },
-          { name: `${announce.ok ? "✅" : "❌"} Announce-kanal`, value: clip(announce.text), inline: false }
+          { name: `${twitch.ok ? "✅" : "❌"} Twitch API`, value: clip(twitch.text), inline: false },
+          { name: `${youtube.ok ? "✅" : "❌"} YouTube RSS`, value: clip(youtube.text), inline: false },
+          { name: `${announceTwitch.ok ? "✅" : "❌"} Twitch announce`, value: clip(announceTwitch.text), inline: false },
+          { name: `${announceYoutube.ok ? "✅" : "❌"} YouTube announce`, value: clip(announceYoutube.text), inline: false }
         );
       await interaction.editReply({ embeds: [embed] });
       return;
@@ -56,10 +59,11 @@ export const command: Command = {
         });
         return;
       }
-      const { twitch, youtube } = buildContentAlertsPreviewEmbeds();
+      const { twitch, youtube, twitchOutgoing, youtubeOutgoing } = buildContentAlertsPreviewEmbeds();
       try {
-        await ch.send({ embeds: [twitch, youtube] });
-        await interaction.reply({ content: "Test-embeds sendt.", ephemeral: true });
+        await ch.send({ ...twitchOutgoing, embeds: [twitch] });
+        await ch.send({ ...youtubeOutgoing, embeds: [youtube] });
+        await interaction.reply({ content: "Test-beskeder sendt (Twitch + YouTube, som ved rigtige alerts).", ephemeral: true });
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
         await interaction.reply({

@@ -15,27 +15,18 @@ exports.event = {
             return;
         if (!message.guild)
             return;
-        if (message.member?.roles.cache.has(config_json_1.default.roles.moderatorRole))
+        const member = message.member;
+        if (member && member.roles.cache.has(config_json_1.default.roles.moderatorRole)) {
             return;
+        }
         const matched = await (0, contentBlock_1.getMatchingContentBlockRules)(message);
         if (matched.length === 0)
             return;
-        const summary = matched
-            .map((m) => `${m.ruleType}:${m.pattern}`)
-            .join(", ");
-        let kindLabel = "blokeret indhold";
-        const hasLink = matched.some((m) => m.ruleType === contentBlock_1.RULE_LINK);
-        const hasImage = matched.some((m) => m.ruleType === contentBlock_1.RULE_IMAGE);
-        if (hasLink && hasImage)
-            kindLabel = "blokerede links/billeder";
-        else if (hasImage)
-            kindLabel = "blokerede billeder/links til billeder";
-        else if (hasLink)
-            kindLabel = "blokerede links";
+        const summary = matched.map((m) => m.pattern).join(", ");
         const preview = message.content?.slice(0, 800) ||
-            (message.attachments.size > 0 ? "[vedhæftning/billede]" : "[tom besked]");
+            (message.attachments.size > 0 ? "[vedhæftning]" : "[tom besked]");
         const embed = new discord_js_1.EmbedBuilder()
-            .setDescription(`${message.author} har forsøgt at sende ${kindLabel}.\n**Regler:** ${summary}\n**Besked:** \`\`\`${preview}\`\`\``)
+            .setDescription(`${message.author} har forsøgt at sende blokeret tekst/link.\n**Regler:** ${summary}\n**Besked:** \`\`\`${preview}\`\`\``)
             .setTimestamp()
             .setFooter({
             text: `ID: ${message.author.id}`,

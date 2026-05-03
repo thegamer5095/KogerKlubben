@@ -1,5 +1,12 @@
 import axios from "axios";
-import { Client, Colors, EmbedBuilder, PermissionFlagsBits, TextChannel } from "discord.js";
+import {
+  Client,
+  Colors,
+  EmbedBuilder,
+  MessageMentionOptions,
+  PermissionFlagsBits,
+  TextChannel,
+} from "discord.js";
 import config from "../config.json";
 import { loadContentAlertsState, saveContentAlertsState } from "../utils/contentAlertsState";
 import type { ContentAlertsState } from "../utils/contentAlertsState";
@@ -13,15 +20,27 @@ type TwitchStream = {
   started_at: string;
 };
 
+export type ContentAnnounceKind = "twitch" | "youtube";
+
 type ContentAlertsConfig = {
   enabled?: boolean;
   pollIntervalSeconds?: number;
   announceChannelId?: string;
+  twitchAnnounceChannelId?: string;
+  youtubeAnnounceChannelId?: string;
+  twitchMessageContent?: string;
+  youtubeMessageContent?: string;
+  twitchPingRoleId?: string;
+  youtubePingRoleId?: string;
+  twitchPingRoleIds?: string[];
+  youtubePingRoleIds?: string[];
   twitchUserLogins?: string[];
   youtubeChannelIds?: string[];
 };
 
 const cfg = config as typeof config & { contentAlerts?: ContentAlertsConfig };
+
+export type ContentAlertsDiagnosticLine = { ok: boolean; text: string };
 
 let tokenCache: { token: string; expiresAt: number } | null = null;
 let pollLock = false;
@@ -101,22 +120,152 @@ async function fetchYoutubeLatest(channelId: string): Promise<{ id: string; titl
   return parseFirstYoutubeEntry(res.data);
 }
 
-function resolveAnnounceChannelId(): string | null {
-  const id = cfg.contentAlerts?.announceChannelId?.trim();
-  if (id) return id;
+export function getContentAlertMessageContent(kind: ContentAnnounceKind): string | undefined {
+  const ca = cfg.contentAlerts;
+  const raw =
+    kind === "twitch" ? ca?.twitchMessageContent : ca?.youtubeMessageContent;
+  if (typeof raw !== "string") return undefined;
+  const s = raw.trim();
+  if (s.length === 0) return undefined;
+  return s.length > 2000 ? s.slice(0, 2000) : s;
+}
+
+function normalizePingRoleIds(ids: string[] | undefined): string[] {
+  if (!ids?.length) return [];
+  return [...new Set(ids.map((x) => x.trim()).filter(Boolean))];
+}
+
+export function resolveContentAlertPingRoleIds(kind: ContentAnnounceKind): string[] {
+  const ca = cfg.contentAlerts;
+  if (kind === "twitch") {
+    const fromArr = normalizePingRoleIds(ca?.twitchPingRoleIds);
+    if (fromArr.length) return fromArr;
+    const one = ca?.twitchPingRoleId?.trim();
+    if (one) return [one];
+    const r = (cfg.roles as { pingStream?: string }).pingStream?.trim();
+    return r ? [r] : [];
+  }
+  const fromArr = normalizePingRoleIds(ca?.youtubePingRoleIds);
+  if (fromArr.length) return fromArr;
+  const one = ca?.youtubePingRoleId?.trim();
+  if (one) return [one];
+  const r = (cfg.roles as { pingYoutube?: string }).pingYoutube?.trim();
+  return r ? [r] : [];
+}
+
+function extractMentionSnowflakes(content: string): { userIds: string[]; roleIds: string[] } {
+  const userIds = new Set<string>();
+  const roleIds = new Set<string>();
+  const userRe = /<@!?(\d{17,20})>/g;
+  const roleRe = /<@&(\d{17,20})>/g;
+  let m: RegExpExecArray | null;
+  while ((m = userRe.exec(content)) !== null) userIds.add(m[1]!);
+  while ((m = roleRe.exec(content)) !== null) roleIds.add(m[1]!);
+  return { userIds: [...userIds], roleIds: [...roleIds] };
+}
+
+export function buildContentAlertOutgoing(kind: ContentAnnounceKind): {
+  content?: string;
+  allowedMentions?: MessageMentionOptions;
+} {
+  const base = getContentAlertMessageContent(kind);
+  const pingRoleIds = resolveContentAlertPingRoleIds(kind);
+  const roleLine = pingRoleIds.map((id) => `<@&${id}>`).join(" ");
+  const parts: string[] = [];
+  if (base) parts.push(base);
+  if (roleLine) parts.push(roleLine);
+  if (parts.length === 0) return {};
+  const content = parts.join("\n").trim().slice(0, 2000);
+  const extracted = extractMentionSnowflakes(content);
+  const allRoleIds = [...new Set([...pingRoleIds, ...extracted.roleIds])];
+  const needsMentionOpts = allRoleIds.length > 0 || extracted.userIds.length > 0;
+  if (!needsMentionOpts) return { content };
+  const allowedMentions: MessageMentionOptions = {
+    parse: [],
+    users: extracted.userIds,
+    roles: allRoleIds,
+  };
+  return { content, allowedMentions };
+}
+
+function resolveAnnounceChannelIdFor(kind: ContentAnnounceKind): string | null {
+  const ca = cfg.contentAlerts;
+  const specific =
+    kind === "twitch" ? ca?.twitchAnnounceChannelId?.trim() : ca?.youtubeAnnounceChannelId?.trim();
+  if (specific) return specific;
+  const legacy = ca?.announceChannelId?.trim();
+  if (legacy) return legacy;
   const fallback = (cfg.channels as { watchchannel?: string }).watchchannel;
   return fallback?.trim() || null;
 }
 
-async function sendEmbed(client: Client, embed: EmbedBuilder): Promise<void> {
-  const channelId = resolveAnnounceChannelId();
+export async function diagnoseAnnounceChannel(
+  client: Client,
+  kind: ContentAnnounceKind
+): Promise<ContentAlertsDiagnosticLine> {
+  const label = kind === "twitch" ? "Twitch" : "YouTube";
+  const announceId = resolveAnnounceChannelIdFor(kind);
+  if (!announceId) {
+    return {
+      ok: false,
+      text: `Ingen ${label}-announce-kanal (contentAlerts.${kind === "twitch" ? "twitchAnnounceChannelId" : "youtubeAnnounceChannelId"}, announceChannelId eller channels.watchchannel).`,
+    };
+  }
+  const ch = await client.channels.fetch(announceId).catch(() => null);
+  if (!ch?.isTextBased()) {
+    return { ok: false, text: `${label}: Kanal ${announceId} findes ikke eller er ikke tekst.` };
+  }
+  if (ch.isDMBased()) {
+    return { ok: false, text: `${label}: Announce-kanal kan ikke være en DM-kanal.` };
+  }
+  const perms = ch.permissionsFor(client.user!.id);
+  const canSend = perms?.has([
+    PermissionFlagsBits.ViewChannel,
+    PermissionFlagsBits.SendMessages,
+    PermissionFlagsBits.EmbedLinks,
+  ]);
+  return {
+    ok: !!canSend,
+    text: canSend
+      ? `${label} OK: #${"name" in ch ? ch.name : announceId} (${announceId}).`
+      : `${label}: Mangler rettigheder (ViewChannel, SendMessages, EmbedLinks).`,
+  };
+}
+
+async function sendContentAlertEmbed(
+  client: Client,
+  embed: EmbedBuilder,
+  kind: ContentAnnounceKind
+): Promise<void> {
+  const label = kind === "twitch" ? "Twitch" : "YouTube";
+  const channelId = resolveAnnounceChannelIdFor(kind);
   if (!channelId) {
-    console.warn("[ContentAlerts] Ingen announce-kanal sat (contentAlerts.announceChannelId eller channels.watchchannel).");
+    console.warn(
+      `[ContentAlerts] Ingen ${label}-announce-kanal (twitchAnnounceChannelId/youtubeAnnounceChannelId, announceChannelId eller channels.watchchannel).`
+    );
     return;
   }
   const ch = await client.channels.fetch(channelId).catch(() => null);
-  if (!ch?.isTextBased()) return;
-  await (ch as TextChannel).send({ embeds: [embed] });
+  if (!ch?.isTextBased()) {
+    console.warn(
+      `[ContentAlerts] ${label}: Kunne ikke sende til kanal ${channelId}: findes ikke eller er ikke en tekstkanal.`
+    );
+    return;
+  }
+  try {
+    const outgoing = buildContentAlertOutgoing(kind);
+    const payload: {
+      content?: string;
+      embeds: EmbedBuilder[];
+      allowedMentions?: MessageMentionOptions;
+    } = { embeds: [embed] };
+    if (outgoing.content !== undefined) payload.content = outgoing.content;
+    if (outgoing.allowedMentions !== undefined) payload.allowedMentions = outgoing.allowedMentions;
+    await (ch as TextChannel).send(payload);
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    console.error(`[ContentAlerts] ${label}: Kunne ikke sende embed til ${channelId}: ${msg}`);
+  }
 }
 
 function twitchEmbed(stream: TwitchStream): EmbedBuilder {
@@ -180,7 +329,7 @@ async function runTwitchTick(client: Client, state: ContentAlertsState): Promise
     const prevId = state.twitchLiveByLogin[login];
     if (stream) {
       if (prevId !== stream.id) {
-        await sendEmbed(client, twitchEmbed(stream));
+        await sendContentAlertEmbed(client, twitchEmbed(stream), "twitch");
         state.twitchLiveByLogin[login] = stream.id;
       }
     } else if (prevId) {
@@ -219,7 +368,7 @@ async function runYoutubeTick(client: Client, state: ContentAlertsState): Promis
     if (!latest) continue;
     const prev = state.youtubeLatestByChannel[channelId];
     if (prev && latest.id !== prev) {
-      await sendEmbed(client, youtubeEmbed(channelId, latest.id, latest.title));
+      await sendContentAlertEmbed(client, youtubeEmbed(channelId, latest.id, latest.title), "youtube");
       state.youtubeLatestByChannel[channelId] = latest.id;
       saveContentAlertsState(state);
     } else if (!prev) {
@@ -256,13 +405,33 @@ export function startContentAlerts(client: Client): void {
   setInterval(() => {
     void tick(client);
   }, intervalSec * 1000);
-}
 
-export type ContentAlertsDiagnosticLine = { ok: boolean; text: string };
+  const twLogins = normalizeLogins(ca?.twitchUserLogins);
+  const ytIds = normalizeChannelIds(ca?.youtubeChannelIds);
+  if (twLogins.length > 0) {
+    void diagnoseAnnounceChannel(client, "twitch").then((a) => {
+      const prefix = "[ContentAlerts] Twitch-announce-kanal";
+      if (a.ok) console.log(`${prefix}: ${a.text}`);
+      else console.warn(`${prefix}: VIRKER IKKE — ${a.text}`);
+    });
+  }
+  if (ytIds.length > 0) {
+    void diagnoseAnnounceChannel(client, "youtube").then((a) => {
+      const prefix = "[ContentAlerts] YouTube-announce-kanal";
+      if (a.ok) console.log(`${prefix}: ${a.text}`);
+      else console.warn(`${prefix}: VIRKER IKKE — ${a.text}`);
+    });
+  }
+}
 
 export async function runContentAlertsDiagnostics(
   client: Client
-): Promise<{ twitch: ContentAlertsDiagnosticLine; youtube: ContentAlertsDiagnosticLine; announce: ContentAlertsDiagnosticLine }> {
+): Promise<{
+  twitch: ContentAlertsDiagnosticLine;
+  youtube: ContentAlertsDiagnosticLine;
+  announceTwitch: ContentAlertsDiagnosticLine;
+  announceYoutube: ContentAlertsDiagnosticLine;
+}> {
   const logins = normalizeLogins(cfg.contentAlerts?.twitchUserLogins);
   const clientId = process.env.TWITCH_CLIENT_ID?.trim();
   const clientSecret = process.env.TWITCH_CLIENT_SECRET?.trim();
@@ -312,33 +481,21 @@ export async function runContentAlertsDiagnostics(
     youtube = { ok: allOk, text: lines.join("\n") };
   }
 
-  const announceId = resolveAnnounceChannelId();
-  let announce: ContentAlertsDiagnosticLine;
-  if (!announceId) {
-    announce = { ok: false, text: "Ingen announce-kanal (contentAlerts.announceChannelId eller channels.watchchannel)." };
+  let announceTwitch: ContentAlertsDiagnosticLine;
+  if (logins.length === 0) {
+    announceTwitch = { ok: true, text: "Ikke i brug (ingen twitchUserLogins)." };
   } else {
-    const ch = await client.channels.fetch(announceId).catch(() => null);
-    if (!ch?.isTextBased()) {
-      announce = { ok: false, text: `Kanal ${announceId} findes ikke eller er ikke tekst.` };
-    } else if (ch.isDMBased()) {
-      announce = { ok: false, text: "Announce-kanal kan ikke være en DM-kanal." };
-    } else {
-      const perms = ch.permissionsFor(client.user!.id);
-      const canSend = perms?.has([
-        PermissionFlagsBits.ViewChannel,
-        PermissionFlagsBits.SendMessages,
-        PermissionFlagsBits.EmbedLinks,
-      ]);
-      announce = {
-        ok: !!canSend,
-        text: canSend
-          ? `Kanal OK: #${"name" in ch ? ch.name : announceId} (${announceId}).`
-          : `Mangler rettigheder (ViewChannel, SendMessages, EmbedLinks) i announce-kanalen.`,
-      };
-    }
+    announceTwitch = await diagnoseAnnounceChannel(client, "twitch");
   }
 
-  return { twitch, youtube, announce };
+  let announceYoutube: ContentAlertsDiagnosticLine;
+  if (ytIds.length === 0) {
+    announceYoutube = { ok: true, text: "Ikke i brug (ingen youtubeChannelIds)." };
+  } else {
+    announceYoutube = await diagnoseAnnounceChannel(client, "youtube");
+  }
+
+  return { twitch, youtube, announceTwitch, announceYoutube };
 }
 
 const mockTwitchStream: TwitchStream = {
@@ -350,11 +507,18 @@ const mockTwitchStream: TwitchStream = {
   started_at: new Date().toISOString(),
 };
 
-export function buildContentAlertsPreviewEmbeds(): { twitch: EmbedBuilder; youtube: EmbedBuilder } {
+export function buildContentAlertsPreviewEmbeds(): {
+  twitch: EmbedBuilder;
+  youtube: EmbedBuilder;
+  twitchOutgoing: ReturnType<typeof buildContentAlertOutgoing>;
+  youtubeOutgoing: ReturnType<typeof buildContentAlertOutgoing>;
+} {
   return {
     twitch: twitchEmbed(mockTwitchStream).setFooter({ text: "TEST — ikke et rigtigt live" }),
     youtube: youtubeEmbed("UCxxxxxxxxxxxxxxxxxxxxxxxx", "dQw4w9WgXcQ", "Eksempel — sådan ser en YouTube-besked ud").setFooter({
       text: "TEST — eksempel-video",
     }),
+    twitchOutgoing: buildContentAlertOutgoing("twitch"),
+    youtubeOutgoing: buildContentAlertOutgoing("youtube"),
   };
 }

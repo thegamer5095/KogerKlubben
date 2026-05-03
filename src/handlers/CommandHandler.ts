@@ -8,6 +8,10 @@ import config from "../config.json";
 
 const scriptExt = process.env.NODE_ENV === "production" ? ".js" : ".ts";
 
+function discordToken(): string | undefined {
+  return process.env.DISCORD_TOKEN?.trim();
+}
+
 export class CommandHandler {
   private client: Bot;
   private commands: Collection<string, Command>;
@@ -70,7 +74,14 @@ export class CommandHandler {
   }
 
   async registerCommands() {
-    const rest = new REST().setToken(config.bot.token);
+    const token = discordToken();
+    if (!token) {
+      console.error(
+        "Cannot register commands: DISCORD_TOKEN is missing in the environment."
+      );
+      return;
+    }
+    const rest = new REST().setToken(token);
     const slashPayload = [...this.commands.values()].map((command) =>
       command.data.toJSON()
     );

@@ -7,7 +7,6 @@ exports.command = void 0;
 const discord_js_1 = require("discord.js");
 const config_json_1 = __importDefault(require("../../config.json"));
 const database_1 = __importDefault(require("../../utils/database"));
-const contentBlock_1 = require("../../utils/contentBlock");
 function isModerator(interaction) {
     if (!interaction.inGuild())
         return false;
@@ -17,22 +16,11 @@ function isModerator(interaction) {
 exports.command = {
     data: new discord_js_1.SlashCommandBuilder()
         .setName("contentblock")
-        .setDescription("Administrér automatisk blokering af links og billeder")
+        .setDescription("Administrér automatisk blokering af tekst og links")
         .setDefaultMemberPermissions(discord_js_1.PermissionFlagsBits.KickMembers)
         .addSubcommand(new discord_js_1.SlashCommandSubcommandBuilder()
         .setName("tilfoej")
-        .setDescription("Tilføj et match til blokeringssystemet")
-        .addStringOption((o) => o
-        .setName("type")
-        .setDescription("Hvad der skal matches")
-        .setRequired(true)
-        .addChoices({ name: "Link / tekst", value: contentBlock_1.RULE_LINK }, { name: "Billede (URL eller vedhæftning)", value: contentBlock_1.RULE_IMAGE }))
-        .addStringOption((o) => o
-        .setName("match")
-        .setDescription("Tekst der skal findes (URL-fragment, domæne osv.). For alle billeder: skriv *")
-        .setRequired(true)
-        .setMinLength(1)
-        .setMaxLength(500)))
+        .setDescription("Tilføj en blokering (tekst eller URL-fragment)"))
         .addSubcommand(new discord_js_1.SlashCommandSubcommandBuilder()
         .setName("fjern")
         .setDescription("Fjern en regel med ID fra listen")
@@ -54,33 +42,18 @@ exports.command = {
         }
         const sub = interaction.options.getSubcommand();
         if (sub === "tilfoej") {
-            await interaction.deferReply({ ephemeral: true });
-            const type = interaction.options.getString("type", true);
-            let match = interaction.options.getString("match", true).trim();
-            if (type === contentBlock_1.RULE_IMAGE && match !== "*") {
-                match = match.toLowerCase();
-            }
-            else if (type === contentBlock_1.RULE_LINK) {
-                match = match.toLowerCase();
-            }
-            try {
-                await database_1.default.contentBlockRule.create({
-                    data: {
-                        pattern: match,
-                        ruleType: type,
-                        staffId: interaction.user.id,
-                    },
-                });
-            }
-            catch {
-                await interaction.editReply({
-                    content: "Denne regel findes allerede (samme type og match).",
-                });
-                return;
-            }
-            await interaction.editReply({
-                content: `Regel tilføjet: **${type}** / \`${match}\``,
-            });
+            const modal = new discord_js_1.ModalBuilder()
+                .setCustomId("contentblock-add-link")
+                .setTitle("Tilføj blokering")
+                .addComponents(new discord_js_1.LabelBuilder()
+                .setLabel("Tekst / URL-fragment der skal blokere")
+                .setTextInputComponent(new discord_js_1.TextInputBuilder()
+                .setCustomId("match")
+                .setStyle(discord_js_1.TextInputStyle.Short)
+                .setRequired(true)
+                .setMinLength(1)
+                .setMaxLength(500)));
+            await interaction.showModal(modal);
             return;
         }
         if (sub === "fjern") {
@@ -107,7 +80,7 @@ exports.command = {
                 await interaction.editReply({ content: "Ingen regler endnu." });
                 return;
             }
-            const lines = rows.map((r) => `\`#${r.id}\` **${r.ruleType}** — \`${r.pattern}\` (staff: <@${r.staffId}>)`);
+            const lines = rows.map((r) => `\`#${r.id}\` — \`${r.pattern}\` (staff: <@${r.staffId}>)`);
             const embed = new discord_js_1.EmbedBuilder()
                 .setTitle("Indholdsblokering")
                 .setDescription(lines.join("\n").slice(0, 3900))
