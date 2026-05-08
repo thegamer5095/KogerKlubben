@@ -17,6 +17,7 @@ const contentAlertsState_1 = require("../utils/contentAlertsState");
 const cfg = config_json_1.default;
 let tokenCache = null;
 let pollLock = false;
+let contentAlertsPollerStarted = false;
 function normalizeLogins(logins) {
     if (!logins?.length)
         return [];
@@ -66,22 +67,45 @@ async function fetchTwitchStreams(clientId, clientSecret, logins) {
     }
     return out;
 }
-function parseFirstYoutubeEntry(xml) {
-    const entry = xml.match(/<entry>[\s\S]*?<\/entry>/);
-    if (!entry)
-        return null;
-    const block = entry[0];
-    const idM = block.match(/<yt:videoId>([^<]+)<\/yt:videoId>/);
-    if (!idM?.[1])
-        return null;
-    const titleM = block.match(/<title(?:[^>]*)>([^<]*)<\/title>/);
-    const title = titleM?.[1]?.trim() || "Ny video";
-    return { id: idM[1], title };
+function entryAlternateHref(block) {
+    const a = block.match(/<link[^>]*rel="alternate"[^>]*href="([^"]+)"/);
+    if (a?.[1])
+        return a[1];
+    const b = block.match(/<link[^>]*href="([^"]+)"[^>]*rel="alternate"/);
+    return b?.[1] ?? "";
 }
-async function fetchYoutubeLatest(channelId) {
+function parseYoutubeFeedEntries(xml) {
+    const raw = xml.match(/<entry>[\s\S]*?<\/entry>/g);
+    if (!raw?.length)
+        return [];
+    const out = [];
+    for (const block of raw) {
+        const idM = block.match(/<yt:videoId>([^<]+)<\/yt:videoId>/);
+        if (!idM?.[1])
+            continue;
+        const titleM = block.match(/<title(?:[^>]*)>([^<]*)<\/title>/);
+        const title = titleM?.[1]?.trim() || "Ny video";
+        const href = entryAlternateHref(block);
+        const isShort = href.includes("/shorts/");
+        out.push({ id: idM[1], title, isShort });
+    }
+    return out;
+}
+function pickLatestNonShort(entries) {
+    for (const e of entries) {
+        if (!e.isShort)
+            return { id: e.id, title: e.title };
+    }
+    return null;
+}
+async function fetchYoutubeLatestNonShort(channelId) {
     const url = `https://www.youtube.com/feeds/videos.xml?channel_id=${encodeURIComponent(channelId)}`;
     const res = await axios_1.default.get(url, { responseType: "text", timeout: 20000 });
-    return parseFirstYoutubeEntry(res.data);
+    return pickLatestNonShort(parseYoutubeFeedEntries(res.data));
+}
+function rememberYoutubeAnnouncement(state, videoId) {
+    const prev = state.youtubeAnnouncedVideoIds ?? [];
+    state.youtubeAnnouncedVideoIds = [videoId, ...prev.filter((x) => x !== videoId)].slice(0, 100);
 }
 function getContentAlertMessageContent(kind) {
     const ca = cfg.contentAlerts;
@@ -296,7 +320,7 @@ async function runYoutubeTick(client, state) {
     if (!state.bootstrappedYoutube) {
         for (const channelId of channelIds) {
             try {
-                const latest = await fetchYoutubeLatest(channelId);
+                const latest = await fetchYoutubeLatestNonShort(channelId);
                 if (latest)
                     state.youtubeLatestByChannel[channelId] = latest.id;
             }
@@ -311,7 +335,7 @@ async function runYoutubeTick(client, state) {
     for (const channelId of channelIds) {
         let latest = null;
         try {
-            latest = await fetchYoutubeLatest(channelId);
+            latest = await fetchYoutubeLatestNonShort(channelId);
         }
         catch (e) {
             console.error(`[ContentAlerts] YouTube RSS fejl (${channelId}):`, e);
@@ -320,8 +344,15 @@ async function runYoutubeTick(client, state) {
         if (!latest)
             continue;
         const prev = state.youtubeLatestByChannel[channelId];
+        const announced = state.youtubeAnnouncedVideoIds ?? [];
         if (prev && latest.id !== prev) {
+            if (announced.includes(latest.id)) {
+                state.youtubeLatestByChannel[channelId] = latest.id;
+                (0, contentAlertsState_1.saveContentAlertsState)(state);
+                continue;
+            }
             await sendContentAlertEmbed(client, youtubeEmbed(channelId, latest.id, latest.title), "youtube");
+            rememberYoutubeAnnouncement(state, latest.id);
             state.youtubeLatestByChannel[channelId] = latest.id;
             (0, contentAlertsState_1.saveContentAlertsState)(state);
         }
@@ -351,6 +382,11 @@ function startContentAlerts(client) {
         console.log("[ContentAlerts] Slået fra i config.");
         return;
     }
+    if (contentAlertsPollerStarted) {
+        console.warn("[ContentAlerts] Poller allerede startet — ignorerer dobbelt kald.");
+        return;
+    }
+    contentAlertsPollerStarted = true;
     const intervalSec = Math.max(30, ca?.pollIntervalSeconds ?? 120);
     console.log(`[ContentAlerts] Starter (hver ${intervalSec}s).`);
     void tick(client);
@@ -414,7 +450,7 @@ async function runContentAlertsDiagnostics(client) {
         let allOk = true;
         for (const id of ytIds) {
             try {
-                const latest = await fetchYoutubeLatest(id);
+                const latest = await fetchYoutubeLatestNonShort(id);
                 if (latest) {
                     lines.push(`${id.slice(0, 8)}… → "${latest.title.slice(0, 60)}${latest.title.length > 60 ? "…" : ""}"`);
                 }

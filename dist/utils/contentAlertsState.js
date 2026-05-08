@@ -7,6 +7,7 @@ const path_1 = require("path");
 const defaultState = {
     twitchLiveByLogin: {},
     youtubeLatestByChannel: {},
+    youtubeAnnouncedVideoIds: [],
     bootstrappedTwitch: false,
     bootstrappedYoutube: false,
 };
@@ -16,19 +17,30 @@ function statePath() {
 function loadContentAlertsState() {
     const p = statePath();
     if (!(0, fs_1.existsSync)(p))
-        return { ...defaultState, twitchLiveByLogin: {}, youtubeLatestByChannel: {} };
+        return {
+            ...defaultState,
+            twitchLiveByLogin: {},
+            youtubeLatestByChannel: {},
+            youtubeAnnouncedVideoIds: [],
+        };
     try {
         const raw = (0, fs_1.readFileSync)(p, "utf8");
         const parsed = JSON.parse(raw);
         return {
             twitchLiveByLogin: parsed.twitchLiveByLogin ?? {},
             youtubeLatestByChannel: parsed.youtubeLatestByChannel ?? {},
+            youtubeAnnouncedVideoIds: parsed.youtubeAnnouncedVideoIds ?? [],
             bootstrappedTwitch: parsed.bootstrappedTwitch ?? false,
             bootstrappedYoutube: parsed.bootstrappedYoutube ?? false,
         };
     }
     catch {
-        return { ...defaultState, twitchLiveByLogin: {}, youtubeLatestByChannel: {} };
+        return {
+            ...defaultState,
+            twitchLiveByLogin: {},
+            youtubeLatestByChannel: {},
+            youtubeAnnouncedVideoIds: [],
+        };
     }
 }
 function saveContentAlertsState(state) {

@@ -1,6 +1,5 @@
 {
     "bot": {
-        "token": "MTM5MzE3NTYwMDAyMTM3MzAxOQ.G7YC8v.XTdm406HUj4EGnunVf_rI2TivdIp9O3HxA997Q",
         "clientId": "1393175600021373019",
         "color": "Blue"
     },
@@ -26,7 +25,7 @@
         "twitchMessageContent": "En tyk mand og hans håndlangere er live på twitch:",
         "youtubeMessageContent": "Så er der fandme ny video på tuben:",
         "twitchUserLogins": ["kogerklubben"],
-        "youtubeChannelIds": ["UCRrwjpikVP_esr_St9Hj9kQ"],
+        "youtubeChannelIds": ["UCRrwjpikVP_esr_St9Hj9kQ", "UCk-y_elz6C9eP-WyD5siurg"],
         "twitchPingRoleId": "1405221847150100642",
         "youtubePingRoleId": "1390052133952422011"
     },

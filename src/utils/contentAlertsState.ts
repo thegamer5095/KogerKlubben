@@ -4,6 +4,7 @@ import { join } from "path";
 export type ContentAlertsState = {
   twitchLiveByLogin: Record<string, string>;
   youtubeLatestByChannel: Record<string, string>;
+  youtubeAnnouncedVideoIds?: string[];
   bootstrappedTwitch: boolean;
   bootstrappedYoutube: boolean;
 };
@@ -11,6 +12,7 @@ export type ContentAlertsState = {
 const defaultState: ContentAlertsState = {
   twitchLiveByLogin: {},
   youtubeLatestByChannel: {},
+  youtubeAnnouncedVideoIds: [],
   bootstrappedTwitch: false,
   bootstrappedYoutube: false,
 };
@@ -21,18 +23,30 @@ function statePath(): string {
 
 export function loadContentAlertsState(): ContentAlertsState {
   const p = statePath();
-  if (!existsSync(p)) return { ...defaultState, twitchLiveByLogin: {}, youtubeLatestByChannel: {} };
+  if (!existsSync(p))
+    return {
+      ...defaultState,
+      twitchLiveByLogin: {},
+      youtubeLatestByChannel: {},
+      youtubeAnnouncedVideoIds: [],
+    };
   try {
     const raw = readFileSync(p, "utf8");
     const parsed = JSON.parse(raw) as Partial<ContentAlertsState>;
     return {
       twitchLiveByLogin: parsed.twitchLiveByLogin ?? {},
       youtubeLatestByChannel: parsed.youtubeLatestByChannel ?? {},
+      youtubeAnnouncedVideoIds: parsed.youtubeAnnouncedVideoIds ?? [],
       bootstrappedTwitch: parsed.bootstrappedTwitch ?? false,
       bootstrappedYoutube: parsed.bootstrappedYoutube ?? false,
     };
   } catch {
-    return { ...defaultState, twitchLiveByLogin: {}, youtubeLatestByChannel: {} };
+    return {
+      ...defaultState,
+      twitchLiveByLogin: {},
+      youtubeLatestByChannel: {},
+      youtubeAnnouncedVideoIds: [],
+    };
   }
 }
 
