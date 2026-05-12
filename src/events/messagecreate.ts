@@ -2,6 +2,29 @@ import { EmbedBuilder, Events, Message } from "discord.js";
 import config from "../config.json";
 import { getMatchingContentBlockRules } from "../utils/contentBlock";
 
+const CONTENT_BLOCK_LOG_COOLDOWN_MS = 60_000;
+const contentBlockLogCooldowns = new Map<string, number>();
+
+function shouldSendContentBlockLog(message: Message, matchedRuleIds: string) {
+  const now = Date.now();
+
+  for (const [key, expiresAt] of contentBlockLogCooldowns) {
+    if (expiresAt <= now) {
+      contentBlockLogCooldowns.delete(key);
+    }
+  }
+
+  const key = `${message.guild?.id}:${message.author.id}:${matchedRuleIds}`;
+  const expiresAt = contentBlockLogCooldowns.get(key);
+
+  if (expiresAt && expiresAt > now) {
+    return false;
+  }
+
+  contentBlockLogCooldowns.set(key, now + CONTENT_BLOCK_LOG_COOLDOWN_MS);
+  return true;
+}
+
 export const event = {
   name: Events.MessageCreate,
   once: false,
@@ -18,6 +41,10 @@ export const event = {
     if (matched.length === 0) return;
 
     const summary = matched.map((m) => m.pattern).join(", ");
+    const matchedRuleIds = matched
+      .map((m) => m.id)
+      .sort((a, b) => a - b)
+      .join(",");
 
     const preview =
       message.content?.slice(0, 800) ||
@@ -35,6 +62,10 @@ export const event = {
     try {
       await message.delete();
     } catch {
+      return;
+    }
+
+    if (!shouldSendContentBlockLog(message, matchedRuleIds)) {
       return;
     }
 
