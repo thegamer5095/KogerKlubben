@@ -1,4 +1,4 @@
-import { ActivityType, Client, Colors, EmbedBuilder, Events, GuildMember } from "discord.js";
+import { ActionRowBuilder, ActivityType, ButtonBuilder, ButtonStyle, Client, Colors, EmbedBuilder, Events, GuildMember } from "discord.js";
 import { startContentAlerts } from "../services/contentAlerts";
 import { ensureDefaultContentBlockRules } from "../utils/contentBlock";
 import { AltDetector } from "discord-alt-detector";
@@ -32,11 +32,19 @@ export const event = {
                 .setTitle("Mistænkelig bruger opdaget")
                 .setDescription(`${member.user.displayName} har lige tilsluttet sig discorden, og er blevet markeret som ${category}\n\nVær ekstra opmærksom på denne bruger, og tag de nøvendige handlinger, hvis det skønnes nødvendigt!`)
                 .setFooter({ text: `ID: ${member.user.id}` })
+                
+
+                const watchlistButton = new ButtonBuilder()
+                .setCustomId("watchlist_add")
+                .setLabel("Tilføj til watchlisten")
+                .setStyle(ButtonStyle.Primary);
+
+                const row = new ActionRowBuilder<ButtonBuilder>().addComponents(watchlistButton);
 
 
                 const channel = await member.guild.channels.fetch(config.channels.logs)
                 if (channel?.isTextBased()) {
-                    await channel.send({ embeds: [embed] })
+                    await channel.send({ embeds: [embed], components: [row] })
                 }
             }
     }

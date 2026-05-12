@@ -4,11 +4,34 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.command = void 0;
+exports.showAddWatchlistModal = showAddWatchlistModal;
 exports.showWatchlistForUser = showWatchlistForUser;
 exports.removeWatchlistUser = removeWatchlistUser;
 const discord_js_1 = require("discord.js");
 const database_1 = __importDefault(require("../../utils/database"));
 const pages_1 = require("../../handlers/pages");
+async function showAddWatchlistModal(interaction, userId) {
+    const modal = new discord_js_1.ModalBuilder()
+        .setCustomId("add-watchlist")
+        .setTitle("Tilføjelse af en bruger til watchlisten");
+    const reason = new discord_js_1.TextInputBuilder()
+        .setCustomId("reason")
+        .setLabel("Hvorfor skal denne bruger på listen?")
+        .setStyle(discord_js_1.TextInputStyle.Paragraph)
+        .setRequired(true);
+    const username = new discord_js_1.TextInputBuilder()
+        .setCustomId("username")
+        .setLabel("Hvad er denne brugers discord ID?")
+        .setStyle(discord_js_1.TextInputStyle.Short)
+        .setRequired(true);
+    if (userId) {
+        username.setValue(userId);
+    }
+    const reasonRow = new discord_js_1.ActionRowBuilder().addComponents(reason);
+    const usernameRow = new discord_js_1.ActionRowBuilder().addComponents(username);
+    modal.addComponents(reasonRow, usernameRow);
+    await interaction.showModal(modal);
+}
 async function showWatchlistForUser(interaction, user) {
     const watchlist = await database_1.default.watchList.findMany({
         where: {
@@ -85,23 +108,7 @@ exports.command = {
     execute: async (interaction) => {
         const subcommand = interaction.options.getSubcommand();
         if (subcommand === "opret") {
-            const modal = new discord_js_1.ModalBuilder()
-                .setCustomId("add-watchlist")
-                .setTitle(`Tilføjelse af en bruger til watchlisten`);
-            const reason = new discord_js_1.TextInputBuilder()
-                .setCustomId("reason")
-                .setLabel("Hvorfor skal denne bruger på listen?")
-                .setStyle(discord_js_1.TextInputStyle.Paragraph)
-                .setRequired(true);
-            const username = new discord_js_1.TextInputBuilder()
-                .setCustomId("username")
-                .setLabel("Hvad er denne brugers discord ID?")
-                .setStyle(discord_js_1.TextInputStyle.Short)
-                .setRequired(true);
-            const reasonRow = new discord_js_1.ActionRowBuilder().addComponents(reason);
-            const usernameRow = new discord_js_1.ActionRowBuilder().addComponents(username);
-            modal.addComponents(reasonRow, usernameRow);
-            await interaction.showModal(modal);
+            await showAddWatchlistModal(interaction);
         }
         else if (subcommand === "list") {
             await interaction.deferReply({ ephemeral: true });

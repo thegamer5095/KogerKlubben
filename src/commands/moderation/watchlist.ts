@@ -1,5 +1,6 @@
 import {
   ActionRowBuilder,
+  ButtonInteraction,
   ChatInputCommandInteraction,
   EmbedBuilder,
   ModalBuilder,
@@ -14,6 +15,47 @@ import {
 import { Command } from "../../interfaces/Command";
 import prisma from "../../utils/database";
 import { embedPages } from "../../handlers/pages";
+
+type AddWatchlistModalInteraction =
+  | ButtonInteraction
+  | ChatInputCommandInteraction
+  | UserContextMenuCommandInteraction;
+
+export async function showAddWatchlistModal(
+  interaction: AddWatchlistModalInteraction,
+  userId?: string
+) {
+  const modal = new ModalBuilder()
+    .setCustomId("add-watchlist")
+    .setTitle("Tilføjelse af en bruger til watchlisten");
+
+  const reason = new TextInputBuilder()
+    .setCustomId("reason")
+    .setLabel("Hvorfor skal denne bruger på listen?")
+    .setStyle(TextInputStyle.Paragraph)
+    .setRequired(true);
+
+  const username = new TextInputBuilder()
+    .setCustomId("username")
+    .setLabel("Hvad er denne brugers discord ID?")
+    .setStyle(TextInputStyle.Short)
+    .setRequired(true);
+
+  if (userId) {
+    username.setValue(userId);
+  }
+
+  const reasonRow = new ActionRowBuilder<TextInputBuilder>().addComponents(
+    reason
+  );
+  const usernameRow = new ActionRowBuilder<TextInputBuilder>().addComponents(
+    username
+  );
+
+  modal.addComponents(reasonRow, usernameRow);
+
+  await interaction.showModal(modal);
+}
 
 export async function showWatchlistForUser(
   interaction:
@@ -137,31 +179,7 @@ export const command: Command = {
     const subcommand = interaction.options.getSubcommand();
 
     if (subcommand === "opret") {
-      const modal = new ModalBuilder()
-        .setCustomId("add-watchlist")
-        .setTitle(`Tilføjelse af en bruger til watchlisten`);
-
-      const reason = new TextInputBuilder()
-        .setCustomId("reason")
-        .setLabel("Hvorfor skal denne bruger på listen?")
-        .setStyle(TextInputStyle.Paragraph)
-        .setRequired(true);
-
-      const username = new TextInputBuilder()
-        .setCustomId("username")
-        .setLabel("Hvad er denne brugers discord ID?")
-        .setStyle(TextInputStyle.Short)
-        .setRequired(true);
-
-      const reasonRow = new ActionRowBuilder<TextInputBuilder>().addComponents(
-        reason
-      );
-      const usernameRow =
-        new ActionRowBuilder<TextInputBuilder>().addComponents(username);
-
-      modal.addComponents(reasonRow, usernameRow);
-
-      await interaction.showModal(modal);
+      await showAddWatchlistModal(interaction);
     } else if (subcommand === "list") {
       await interaction.deferReply({ ephemeral: true });
 

@@ -65,6 +65,7 @@ class ButtonHandler {
                 }
             }
         }
+        this.client.buttons = this.buttons;
         return this.buttons;
     }
 }

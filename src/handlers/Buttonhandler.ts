@@ -1,13 +1,14 @@
-import { Client, Collection } from 'discord.js';
+import { Collection } from 'discord.js';
 import { readdirSync, existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { Button } from '../interfaces/Button';
+import type { Bot } from '../index';
 
 export class ButtonHandler {
-    private client: Client;
+    private client: Bot;
     private buttons: Collection<string, Button>;
 
-    constructor(client: Client) {
+    constructor(client: Bot) {
         this.client = client;
         this.buttons = new Collection();
     }
@@ -38,6 +39,7 @@ export class ButtonHandler {
             }
         }
 
+        this.client.buttons = this.buttons;
         return this.buttons;
     }
 }
