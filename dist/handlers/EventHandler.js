@@ -36,14 +36,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.EventHandler = void 0;
 const fs_1 = require("fs");
 const path_1 = require("path");
-const scriptExt_1 = require("../utils/scriptExt");
+const scriptExt = __filename.endsWith(".js") ? ".js" : ".ts";
 class EventHandler {
     constructor(client) {
         this.client = client;
     }
     async loadEvents() {
         const eventPath = (0, path_1.join)(__dirname, "..", "events");
-        const eventFiles = (0, fs_1.readdirSync)(eventPath).filter((file) => file.endsWith(scriptExt_1.scriptExt));
+        const eventFiles = (0, fs_1.readdirSync)(eventPath).filter((file) => file.endsWith(scriptExt));
         for (const file of eventFiles) {
             const { event } = await Promise.resolve(`${(0, path_1.join)(eventPath, file)}`).then(s => __importStar(require(s)));
             if (event.once) {

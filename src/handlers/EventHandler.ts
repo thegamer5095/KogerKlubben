@@ -1,7 +1,7 @@
 import { Client } from "discord.js";
 import { readdirSync } from "fs";
 import { join } from "path";
-import { scriptExt } from "../utils/scriptExt";
+const scriptExt = __filename.endsWith(".js") ? ".js" : ".ts";
 
 export class EventHandler {
   private client: Client;

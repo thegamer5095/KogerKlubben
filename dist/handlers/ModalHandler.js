@@ -37,7 +37,7 @@ exports.ModalHandler = void 0;
 const discord_js_1 = require("discord.js");
 const fs_1 = require("fs");
 const path_1 = require("path");
-const scriptExt_1 = require("../utils/scriptExt");
+const scriptExt = __filename.endsWith(".js") ? ".js" : ".ts";
 class ModalHandler {
     constructor(client) {
         // Change from Client to Bot
@@ -47,7 +47,7 @@ class ModalHandler {
     async loadModals() {
         const modalPath = (0, path_1.join)(__dirname, "..", "modals");
         for (const dir of (0, fs_1.readdirSync)(modalPath)) {
-            const modals = (0, fs_1.readdirSync)((0, path_1.join)(modalPath, dir)).filter((file) => file.endsWith(scriptExt_1.scriptExt));
+            const modals = (0, fs_1.readdirSync)((0, path_1.join)(modalPath, dir)).filter((file) => file.endsWith(scriptExt));
             for (const file of modals) {
                 const { modal } = await Promise.resolve(`${(0, path_1.join)(modalPath, dir, file)}`).then(s => __importStar(require(s)));
                 this.modals.set(modal.customId, modal);

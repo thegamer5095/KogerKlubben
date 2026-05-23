@@ -41,7 +41,7 @@ const discord_js_1 = require("discord.js");
 const fs_1 = require("fs");
 const path_1 = require("path");
 const config_json_1 = __importDefault(require("../config.json"));
-const scriptExt_1 = require("../utils/scriptExt");
+const scriptExt = __filename.endsWith(".js") ? ".js" : ".ts";
 function discordToken() {
     return process.env.DISCORD_TOKEN?.trim();
 }
@@ -54,7 +54,7 @@ class CommandHandler {
     async loadCommands() {
         const commandPath = (0, path_1.join)(__dirname, "..", "commands");
         for (const dir of (0, fs_1.readdirSync)(commandPath)) {
-            const commands = (0, fs_1.readdirSync)((0, path_1.join)(commandPath, dir)).filter((file) => file.endsWith(scriptExt_1.scriptExt));
+            const commands = (0, fs_1.readdirSync)((0, path_1.join)(commandPath, dir)).filter((file) => file.endsWith(scriptExt));
             for (const file of commands) {
                 const { command } = await Promise.resolve(`${(0, path_1.join)(commandPath, dir, file)}`).then(s => __importStar(require(s)));
                 if (command && command.data) {
@@ -72,7 +72,7 @@ class CommandHandler {
     async loadContextMenus() {
         const commandPath = (0, path_1.join)(__dirname, "..", "context-menus");
         for (const dir of (0, fs_1.readdirSync)(commandPath)) {
-            const files = (0, fs_1.readdirSync)((0, path_1.join)(commandPath, dir)).filter((file) => file.endsWith(scriptExt_1.scriptExt));
+            const files = (0, fs_1.readdirSync)((0, path_1.join)(commandPath, dir)).filter((file) => file.endsWith(scriptExt));
             for (const file of files) {
                 const mod = await Promise.resolve(`${(0, path_1.join)(commandPath, dir, file)}`).then(s => __importStar(require(s)));
                 if (Array.isArray(mod.contextMenus)) {

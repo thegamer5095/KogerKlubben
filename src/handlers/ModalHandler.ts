@@ -3,7 +3,8 @@ import { readdirSync } from "fs";
 import { join } from "path";
 import { Modal } from "../interfaces/Modal";
 import { Bot } from "../index";
-import { scriptExt } from "../utils/scriptExt";
+
+const scriptExt = __filename.endsWith(".js") ? ".js" : ".ts";
 
 export class ModalHandler {
   private client: Bot; // Change from Client to Bot

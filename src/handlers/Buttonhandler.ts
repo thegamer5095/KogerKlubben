@@ -3,7 +3,8 @@ import { readdirSync, existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { Button } from '../interfaces/Button';
 import type { Bot } from '../index';
-import { scriptExt } from '../utils/scriptExt';
+
+const scriptExt = __filename.endsWith('.js') ? '.js' : '.ts';
 
 export class ButtonHandler {
     private client: Bot;

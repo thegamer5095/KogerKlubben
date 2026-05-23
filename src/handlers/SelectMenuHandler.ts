@@ -2,7 +2,8 @@ import { Client, Collection } from "discord.js";
 import { readdirSync, existsSync, mkdirSync } from "fs";
 import { join } from "path";
 import { SelectMenu } from "../interfaces/SelectMenu";
-import { scriptExt } from "../utils/scriptExt";
+
+const scriptExt = __filename.endsWith(".js") ? ".js" : ".ts";
 
 export class SelectMenuHandler {
   private client: Client;

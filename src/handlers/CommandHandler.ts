@@ -5,7 +5,8 @@ import { Command } from "../interfaces/Command";
 import { ContextMenuCommand } from "../interfaces/ContextMenuCommand";
 import { Bot } from "../index";
 import config from "../config.json";
-import { scriptExt } from "../utils/scriptExt";
+
+const scriptExt = __filename.endsWith(".js") ? ".js" : ".ts";
 
 function discordToken(): string | undefined {
   return process.env.DISCORD_TOKEN?.trim();
