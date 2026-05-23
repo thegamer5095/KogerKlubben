@@ -4,9 +4,15 @@ import { ensureDefaultContentBlockRules } from "../utils/contentBlock";
 import { AltDetector } from "discord-alt-detector";
 import config from "../config.json";
 
+const SUSPICIOUS_CATEGORIES = new Set([
+    "suspicious",
+    "highly-suspicious",
+    "mega-suspicious",
+]);
+
 export const event = {
     name: Events.GuildMemberAdd,
-    once: true,
+    once: false,
     async execute(member: GuildMember) {
         const altDetector = new AltDetector({
             ageWeight: 2,
@@ -25,7 +31,11 @@ export const event = {
         const result = altDetector.check(member);
         const category = altDetector.getCategory(result);
 
-        if (result.total < 1) {
+        console.log(
+            `[AltDetector] ${member.user.tag} (${member.id}) score=${result.total} category=${category}`
+        );
+
+        if (SUSPICIOUS_CATEGORIES.has(category)) {
 
             const embed = new EmbedBuilder()
                 .setColor(Colors.Red)

@@ -30,6 +30,7 @@ export class Bot extends Client {
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.GuildMembers,
+        GatewayIntentBits.GuildPresences,
         GatewayIntentBits.GuildMessageReactions,
         GatewayIntentBits.MessageContent,
       ],
