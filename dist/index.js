@@ -48,7 +48,6 @@ class Bot extends discord_js_1.Client {
             }
             await this.commandHandler.loadCommands();
             await this.commandHandler.loadContextMenus();
-            await this.commandHandler.registerCommands();
             await this.eventHandler.loadEvents();
             await this.modalHandler.loadModals();
             await this.buttonHandler.loadButtons();
@@ -58,6 +57,7 @@ class Bot extends discord_js_1.Client {
                 throw new Error("Missing DISCORD_TOKEN in environment (.env).");
             }
             await this.login(token);
+            await this.commandHandler.registerCommands();
         }
         catch (error) {
             console.error("[Bot] Failed to initialize:", error);

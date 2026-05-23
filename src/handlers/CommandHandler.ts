@@ -74,6 +74,20 @@ export class CommandHandler {
   }
 
   async registerCommands() {
+    const applicationId = this.client.user?.id;
+    if (!applicationId) {
+      console.error(
+        "Cannot register commands: bot must be logged in before registering."
+      );
+      return;
+    }
+
+    if (config.bot.clientId && config.bot.clientId !== applicationId) {
+      console.warn(
+        `[Bot] config.bot.clientId (${config.bot.clientId}) does not match DISCORD_TOKEN bot (${applicationId}). Using token bot id.`
+      );
+    }
+
     const token = discordToken();
     if (!token) {
       console.error(
@@ -103,7 +117,7 @@ export class CommandHandler {
         return;
       }
 
-      await rest.put(Routes.applicationCommands(config.bot.clientId), {
+      await rest.put(Routes.applicationCommands(applicationId), {
         body: commands,
       });
 

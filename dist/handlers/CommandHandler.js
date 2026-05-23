@@ -89,6 +89,14 @@ class CommandHandler {
         return this.contextMenus;
     }
     async registerCommands() {
+        const applicationId = this.client.user?.id;
+        if (!applicationId) {
+            console.error("Cannot register commands: bot must be logged in before registering.");
+            return;
+        }
+        if (config_json_1.default.bot.clientId && config_json_1.default.bot.clientId !== applicationId) {
+            console.warn(`[Bot] config.bot.clientId (${config_json_1.default.bot.clientId}) does not match DISCORD_TOKEN bot (${applicationId}). Using token bot id.`);
+        }
         const token = discordToken();
         if (!token) {
             console.error("Cannot register commands: DISCORD_TOKEN is missing in the environment.");
@@ -105,7 +113,7 @@ class CommandHandler {
                 console.warn("No commands found to register! Check your command loading process.");
                 return;
             }
-            await rest.put(discord_js_1.Routes.applicationCommands(config_json_1.default.bot.clientId), {
+            await rest.put(discord_js_1.Routes.applicationCommands(applicationId), {
                 body: commands,
             });
             console.log("Successfully reloaded application (/) commands.");
