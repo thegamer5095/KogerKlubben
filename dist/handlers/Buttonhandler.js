@@ -37,6 +37,7 @@ exports.ButtonHandler = void 0;
 const discord_js_1 = require("discord.js");
 const fs_1 = require("fs");
 const path_1 = require("path");
+const scriptExt_1 = require("../utils/scriptExt");
 class ButtonHandler {
     constructor(client) {
         this.client = client;
@@ -56,7 +57,7 @@ class ButtonHandler {
         }
         for (const dir of (0, fs_1.readdirSync)(buttonPath)) {
             const buttons = (0, fs_1.readdirSync)((0, path_1.join)(buttonPath, dir))
-                .filter(file => file.endsWith('.ts') || file.endsWith('.js'));
+                .filter(file => file.endsWith(scriptExt_1.scriptExt));
             for (const file of buttons) {
                 const { button } = await Promise.resolve(`${(0, path_1.join)(buttonPath, dir, file)}`).then(s => __importStar(require(s)));
                 if (button && button.customId) {

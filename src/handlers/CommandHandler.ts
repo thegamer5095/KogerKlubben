@@ -5,8 +5,7 @@ import { Command } from "../interfaces/Command";
 import { ContextMenuCommand } from "../interfaces/ContextMenuCommand";
 import { Bot } from "../index";
 import config from "../config.json";
-
-const scriptExt = process.env.NODE_ENV === "production" ? ".js" : ".ts";
+import { scriptExt } from "../utils/scriptExt";
 
 function discordToken(): string | undefined {
   return process.env.DISCORD_TOKEN?.trim();

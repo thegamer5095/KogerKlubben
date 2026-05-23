@@ -2,6 +2,7 @@ import { Client, Collection } from "discord.js";
 import { readdirSync, existsSync, mkdirSync } from "fs";
 import { join } from "path";
 import { SelectMenu } from "../interfaces/SelectMenu";
+import { scriptExt } from "../utils/scriptExt";
 
 export class SelectMenuHandler {
   private client: Client;
@@ -29,7 +30,7 @@ export class SelectMenuHandler {
 
     for (const dir of readdirSync(selectMenuPath)) {
       const selectMenus = readdirSync(join(selectMenuPath, dir)).filter(
-        (file) => file.endsWith(".ts") || file.endsWith(".js")
+        (file) => file.endsWith(scriptExt)
       );
 
       for (const file of selectMenus) {

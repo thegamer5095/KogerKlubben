@@ -1,8 +1,7 @@
 import { Client } from "discord.js";
 import { readdirSync } from "fs";
 import { join } from "path";
-
-const scriptExt = process.env.NODE_ENV === "production" ? ".js" : ".ts";
+import { scriptExt } from "../utils/scriptExt";
 
 export class EventHandler {
   private client: Client;

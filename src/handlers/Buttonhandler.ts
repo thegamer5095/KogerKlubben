@@ -3,6 +3,7 @@ import { readdirSync, existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { Button } from '../interfaces/Button';
 import type { Bot } from '../index';
+import { scriptExt } from '../utils/scriptExt';
 
 export class ButtonHandler {
     private client: Bot;
@@ -28,7 +29,7 @@ export class ButtonHandler {
         
         for (const dir of readdirSync(buttonPath)) {
             const buttons = readdirSync(join(buttonPath, dir))
-                .filter(file => file.endsWith('.ts') || file.endsWith('.js'));
+                .filter(file => file.endsWith(scriptExt));
             
             for (const file of buttons) {
                 const { button } = await import(join(buttonPath, dir, file));

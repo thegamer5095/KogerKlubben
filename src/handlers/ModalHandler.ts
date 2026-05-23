@@ -3,6 +3,7 @@ import { readdirSync } from "fs";
 import { join } from "path";
 import { Modal } from "../interfaces/Modal";
 import { Bot } from "../index";
+import { scriptExt } from "../utils/scriptExt";
 
 export class ModalHandler {
   private client: Bot; // Change from Client to Bot
@@ -19,7 +20,7 @@ export class ModalHandler {
 
     for (const dir of readdirSync(modalPath)) {
       const modals = readdirSync(join(modalPath, dir)).filter((file) =>
-        file.endsWith(".ts")
+        file.endsWith(scriptExt)
       );
 
       for (const file of modals) {

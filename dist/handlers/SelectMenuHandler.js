@@ -37,6 +37,7 @@ exports.SelectMenuHandler = void 0;
 const discord_js_1 = require("discord.js");
 const fs_1 = require("fs");
 const path_1 = require("path");
+const scriptExt_1 = require("../utils/scriptExt");
 class SelectMenuHandler {
     constructor(client) {
         this.client = client;
@@ -55,7 +56,7 @@ class SelectMenuHandler {
             }
         }
         for (const dir of (0, fs_1.readdirSync)(selectMenuPath)) {
-            const selectMenus = (0, fs_1.readdirSync)((0, path_1.join)(selectMenuPath, dir)).filter((file) => file.endsWith(".ts") || file.endsWith(".js"));
+            const selectMenus = (0, fs_1.readdirSync)((0, path_1.join)(selectMenuPath, dir)).filter((file) => file.endsWith(scriptExt_1.scriptExt));
             for (const file of selectMenus) {
                 const { selectMenu } = await Promise.resolve(`${(0, path_1.join)(selectMenuPath, dir, file)}`).then(s => __importStar(require(s)));
                 if (selectMenu && selectMenu.customId) {
