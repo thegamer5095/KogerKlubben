@@ -9,7 +9,7 @@ export const event = {
     once: true,
     async execute(member: GuildMember) {
         const altDetector = new AltDetector({
-            ageWeight: 1,
+            ageWeight: 2,
             statusWeight:1, 
             activityWeight:1, 
             usernameWordsWeight: 1, 
