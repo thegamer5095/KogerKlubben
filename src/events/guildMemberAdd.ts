@@ -1,6 +1,4 @@
 import { ActionRowBuilder, ActivityType, ButtonBuilder, ButtonStyle, Client, Colors, EmbedBuilder, Events, GuildMember } from "discord.js";
-import { startContentAlerts } from "../services/contentAlerts";
-import { ensureDefaultContentBlockRules } from "../utils/contentBlock";
 import { AltDetector } from "discord-alt-detector";
 import config from "../config.json";
 
