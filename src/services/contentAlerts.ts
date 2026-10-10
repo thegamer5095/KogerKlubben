@@ -265,9 +265,10 @@ export async function diagnoseAnnounceChannel(
 async function sendContentAlertEmbed(
   client: Client,
   embed: EmbedBuilder,
-  kind: ContentAnnounceKind
+  kind: ContentAnnounceKind,
+  labelOverride?: string
 ): Promise<void> {
-  const label = kind === "twitch" ? "Twitch" : "YouTube";
+  const label = labelOverride ?? (kind === "twitch" ? "Twitch" : "YouTube");
   const channelId = resolveAnnounceChannelIdFor(kind);
   if (!channelId) {
     console.warn(
@@ -311,11 +312,15 @@ function twitchEmbed(stream: TwitchStream): EmbedBuilder {
     .setTimestamp(new Date(stream.started_at));
 }
 
+function isYoutubeLiveTitle(title: string): boolean {
+  return title.includes("🔴");
+}
+
 function youtubeEmbed(channelId: string, videoId: string, title: string): EmbedBuilder {
   const url = `https://www.youtube.com/watch?v=${videoId}`;
   return new EmbedBuilder()
     .setColor(Colors.Red)
-    .setTitle("Ny YouTube-video")
+    .setTitle(isYoutubeLiveTitle(title) ? "Live på YouTube" : "Ny YouTube-video")
     .setURL(url)
     .setDescription(`**${title}**`)
     .setImage(`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`);
@@ -404,7 +409,14 @@ async function runYoutubeTick(client: Client, state: ContentAlertsState): Promis
         saveContentAlertsState(state);
         continue;
       }
-      await sendContentAlertEmbed(client, youtubeEmbed(channelId, latest.id, latest.title), "youtube");
+      // 🔴 i titlen = livestream → stream-kanal + stream-besked/ping
+      const isLive = isYoutubeLiveTitle(latest.title);
+      await sendContentAlertEmbed(
+        client,
+        youtubeEmbed(channelId, latest.id, latest.title),
+        isLive ? "twitch" : "youtube",
+        isLive ? "YouTube (live)" : undefined
+      );
       rememberYoutubeAnnouncement(state, latest.id);
       state.youtubeLatestByChannel[channelId] = latest.id;
       saveContentAlertsState(state);
