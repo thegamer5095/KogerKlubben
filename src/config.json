@@ -17,7 +17,7 @@
         "watchchannel": "1399109464010915901",
         "logs": "833402838692003871",
         "ticketChannel": "1399109464010915901",
-        "spammerChannel": ""
+        "spammerChannel": "1399109464010915901"
     },
     "contentAlerts": {
         "enabled": true,
