@@ -17,7 +17,7 @@
         "watchchannel": "1399109464010915901",
         "logs": "833402838692003871",
         "ticketChannel": "1399109464010915901",
-        "spammerChannel": "1399109464010915901"
+        "spammerChannel": "1558501018906656768"
     },
     "contentAlerts": {
         "enabled": true,
@@ -26,7 +26,7 @@
         "youtubeAnnounceChannelId": "1178000660424302622",
         "twitchMessageContent": "En tyk mand og hans håndlangere er live på twitch:",
         "youtubeMessageContent": "Så er der fandme ny video på tuben:",
-        "twitchUserLogins": ["kogerklubben"],
+        "twitchUserLogins": ["oliverhenriksenn"],
         "youtubeChannelIds": ["UCRrwjpikVP_esr_St9Hj9kQ", "UCk-y_elz6C9eP-WyD5siurg"],
         "twitchPingRoleId": "1405221847150100642",
         "youtubePingRoleId": "1390052133952422011"
